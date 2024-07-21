@@ -1,0 +1,59 @@
+dataset :
+  train : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/rand_cut_mg_train.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/Mg22_size512_convertXYZQ_train.npy
+          }
+  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/rand_cut_mg_val.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/Mg22_size512_convertXYZQ_val.npy
+          }
+  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/rand_cut_mg_test.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/Mg22_size512_convertXYZQ_test.npy
+          }
+
+
+optimizer : {
+  type: Adam,
+  kwargs: {
+  lr : 0.000001, 
+  weight_decay : 0
+}}
+
+
+# scheduler: {
+#   type: GradualWarmup,
+#   kwargs_1: {
+#     step_size: 50,
+#     gamma : 0.5
+#   },
+#   kwargs_2: {
+#     multiplier: 1,
+#     total_epoch: 200,
+#   }
+# }
+            
+model : 
+  dim_feat: 512 
+  num_pc: 128
+  num_p0: 128 
+  radius: 1.0
+  up_factors: [1, 2, 2]
+  bounding : True
+
+
+batch_size : 32
+include_q : False
+num_workers : 4
+step_per_update: 1
+epochs : 10_000
+save_freq : 20
+loss_func : cd_l1
+gpu : [0]
+seed : 2024
+
+RANGES : {
+  MIN_X : -270.0,
+  MAX_X : 270.0,
+  MIN_Y : -270.0,
+  MAX_Y : 270.0,
+  MIN_Z : -185.0,
+  MAX_Z : 1155.0
+}

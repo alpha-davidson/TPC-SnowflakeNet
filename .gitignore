@@ -1,0 +1,11 @@
+scripts/
+data/
+completion/exp/
+loss_functions/Chamfer3D/build/
+loss_functions/Chamfer3D/chamfer_3D.egg-info/
+loss_functions/Chamfer3D/dist/
+loss_functions/emd/build/
+loss_functions/emd/dist/
+loss_functions/emd/emd.egg-info
+models/pointnet2_ops_lib/
+imgs/
