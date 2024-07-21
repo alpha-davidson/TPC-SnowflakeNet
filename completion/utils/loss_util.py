@@ -50,22 +50,57 @@ class Completionloss:
         return d
 
     def get_loss(self, pcds_pred, partial, gt):
-        Pc, P1, P2, P3 = pcds_pred
-        gt_2 = fps_subsample(gt, P2.shape[1])
-        gt_1 = fps_subsample(gt_2, P1.shape[1])
-        gt_c = fps_subsample(gt_1, Pc.shape[1])
 
-        loss_c = self.metric(Pc, gt_c)
-        loss_1 = self.metric(P1, gt_1)
-        loss_2 = self.metric(P2, gt_2)
-        loss_3 = self.metric(P3, gt)
+        if len(pcds_pred) == 2:
+            
+            Pc, P1 = pcds_pred
+            gt_c = fps_subsample(gt, Pc.shape[1])
 
-        partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P3)
+            loss_c = self.metric(Pc, gt_c)
+            loss_1 = self.metric(P1, gt)
 
-        loss_all = loss_c + loss_1 + loss_2 + loss_3 + partial_matching
-        losses = [partial_matching, loss_c, loss_1, loss_2, loss_3]
-        return loss_all, losses
+            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P1)
 
+            loss_all = loss_c + loss_1 + partial_matching
+            losses = [partial_matching, loss_c, loss_1]
+            return loss_all, losses
+
+        elif len(pcds_pred) == 3:
+            
+            Pc, P1, P2 = pcds_pred
+            gt_1 = fps_subsample(gt, P1.shape[1])
+            gt_c = fps_subsample(gt_1, Pc.shape[1])
+
+            loss_c = self.metric(Pc, gt_c)
+            loss_1 = self.metric(P1, gt_1)
+            loss_2 = self.metric(P2, gt)
+
+            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P2)
+
+            loss_all = loss_c + loss_1 + loss_2 + partial_matching
+            losses = [partial_matching, loss_c, loss_1, loss_2]
+            return loss_all, losses
+
+        elif len(pcds_pred) == 4:
+            
+            Pc, P1, P2, P3 = pcds_pred
+            gt_2 = fps_subsample(gt, P2.shape[1])
+            gt_1 = fps_subsample(gt_2, P1.shape[1])
+            gt_c = fps_subsample(gt_1, Pc.shape[1])
+
+            loss_c = self.metric(Pc, gt_c)
+            loss_1 = self.metric(P1, gt_1)
+            loss_2 = self.metric(P2, gt_2)
+            loss_3 = self.metric(P3, gt)
+
+            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P3)
+
+            loss_all = loss_c + loss_1 + loss_2 + loss_3 + partial_matching
+            losses = [partial_matching, loss_c, loss_1, loss_2, loss_3]
+            return loss_all, losses
+
+        else:
+            raise NotImplementedError("Four or more SPD modules not implemented")
 
 
 

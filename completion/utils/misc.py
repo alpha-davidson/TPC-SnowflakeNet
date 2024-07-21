@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.utils import fps_subsample as fps
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import numpy as np
 from io import BytesIO
 from PIL import Image
@@ -125,7 +126,7 @@ def seprate_point_cloud(xyz, num_points, crop, inp_n_points=2048, fixed_points=N
 
 
 
-def rescale_feats(xs, ys, zs, qs, config):
+def rescale_feats(xs, ys, zs, config):
     '''
     Undo's min-max scaling
     Author: Ben Wagner
@@ -134,11 +135,8 @@ def rescale_feats(xs, ys, zs, qs, config):
     xs = xs * (config.RANGES.MAX_X - config.RANGES.MIN_X) + config.RANGES.MIN_X
     ys = ys * (config.RANGES.MAX_Y - config.RANGES.MIN_Y) + config.RANGES.MIN_Y
     zs = zs * (config.RANGES.MAX_Z - config.RANGES.MIN_Z) + config.RANGES.MIN_Z
-    if config.include_q: 
-        # TODO: Figure out if log unscaling is needed
-        qs = qs * (config.RANGES.MAX_LOG_Q - config.RANGES.MIN_LOG_Q) + config.RANGES.MIN_LOG_Q
 
-    return xs, ys, zs, qs
+    return xs, ys, zs
 
 
 def val_img(event, config):
@@ -230,13 +228,11 @@ def load_model(base_model, ckpt_path):
 
 def triplet_img(input_pc, output_pc, gt_pc, idx, path, cfg):
 
-    assert os.getcwd() == '/home/DAVIDSON/bewagner/summer2023/ATTPCPoinTr', f'Current Directory == {os.getcwd()}'
-
     fig, (input_ax, output_ax, gt_ax) = plt.subplots(1, 3, figsize=(18,6), subplot_kw=dict(projection='3d'))
 
-    input_xs, input_ys, input_zs, _ = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], None, cfg)
-    output_xs, output_ys, output_zs, _ = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], None, cfg)
-    gt_xs, gt_ys, gt_zs, _ = rescale_feats(gt_pc[:, 0], gt_pc[:, 1], gt_pc[:, 2], None, cfg)
+    input_xs, input_ys, input_zs = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], cfg)
+    output_xs, output_ys, output_zs = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], cfg)
+    gt_xs, gt_ys, gt_zs = rescale_feats(gt_pc[:, 0], gt_pc[:, 1], gt_pc[:, 2], cfg)
 
     input_ax.scatter(input_xs, input_zs, input_ys, s=1)
     output_ax.scatter(output_xs, output_zs, output_ys, s=1)
@@ -280,17 +276,6 @@ def triplet_img(input_pc, output_pc, gt_pc, idx, path, cfg):
 
 
 def experimental_img(input_pc, output_pc, idx, path, cfg):
-
-    assert os.getcwd() == '/home/DAVIDSON/bewagner/summer2023/ATTPCPoinTr', f'Current Directory == {os.getcwd()}'
-
-    RANGES = {
-            'MIN_X': -270.0,
-            'MAX_X': 270.0,
-            'MIN_Y': -270.0,
-            'MAX_Y': 270.0,
-            'MIN_Z': -185.0,
-            'MAX_Z': 1155.0
-        }
 
     fig, (input_ax, output_ax) = plt.subplots(1, 2, figsize=(12,6), subplot_kw=dict(projection='3d'))
 
@@ -373,4 +358,217 @@ def normed_img(input_pc, output_pc, gt_pc, idx, path, cfg):
         path = '/'.join(cfg.dataset.test.partial.split('/')[:-1]) + '/imgs/'
 
     plt.savefig(path+'event'+str(idx).zfill(4)+'.png')
+    plt.close()
+
+
+def check_grads(module, grad_in, grad_out):
+    in_flags = np.ndarray((len(grad_in)*2), dtype=bool)
+    for i in range(len(grad_in)):
+        if grad_in[i] is None:
+            in_flags[i*2] = False
+            in_flags[i*2+1] = False
+        else:
+            in_flags[i*2] = np.any(np.isnan(grad_in[i].detach().cpu().numpy()))
+            in_flags[i*2+1] = np.any(np.isinf(grad_in[i].detach().cpu().numpy()))
+    out_flags = np.ndarray((len(grad_out)*2), dtype=bool)
+    for i in range(len(grad_out)):
+        if grad_out[i] is None:
+            out_flags[i*2] = False
+            out_flags[i*2+1] = False
+        else:
+            out_flags[i*2] = np.any(np.isnan(grad_out[i].detach().cpu().numpy()))
+            out_flags[i*2+1] = np.any(np.isinf(grad_out[i].detach().cpu().numpy()))
+    
+    if np.any(in_flags):
+        print("NaN or Inf found in input gradient:")
+        print(grad_in)
+        print("to module:")
+        print(type(module))
+        print(module)
+        raise Exception(f"NaN of Inf found in input gradient to module {type(module)}")
+    if np.any(out_flags):
+        print("NaN or Inf found in output gradient:")
+        print(grad_out)
+        print("from module:")
+        print(type(module))
+        print(module)
+        raise Exception(f"NaN of Inf found in output gradient from module {type(module)}")
+    
+def xy_plane_img(input_pc, output_pc, gt_pc, idx, path, cfg):
+
+    fig, (input_ax, output_ax, gt_ax) = plt.subplots(1, 3, figsize=(18,6))
+
+    input_xs, input_ys, _ = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], cfg)
+    output_xs, output_ys, _ = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], cfg)
+    gt_xs, gt_ys, _ = rescale_feats(gt_pc[:, 0], gt_pc[:, 1], gt_pc[:, 2], cfg)
+
+    input_ax.scatter(input_xs, input_ys, s=1)
+    output_ax.scatter(output_xs, output_ys, s=1)
+    gt_ax.scatter(gt_xs, gt_ys, s=1)
+
+    input_ax.set_xlabel('X (mm)')
+    input_ax.set_ylabel('Y (mm)')
+
+    output_ax.set_xlabel('X (mm)')
+    output_ax.set_ylabel('Y (mm)')
+
+    gt_ax.set_xlabel('X (mm)')
+    gt_ax.set_ylabel('Y (mm)')
+
+    input_ax.set_xlim(xmin=cfg.RANGES.MIN_X, xmax=cfg.RANGES.MAX_X)
+    input_ax.set_ylim(ymin=cfg.RANGES.MIN_Y, ymax=cfg.RANGES.MAX_Y)
+
+    output_ax.set_xlim(xmin=cfg.RANGES.MIN_X, xmax=cfg.RANGES.MAX_X)
+    output_ax.set_ylim(ymin=cfg.RANGES.MIN_Y, ymax=cfg.RANGES.MAX_Y)
+
+    gt_ax.set_xlim(xmin=cfg.RANGES.MIN_X, xmax=cfg.RANGES.MAX_X)
+    gt_ax.set_ylim(ymin=cfg.RANGES.MIN_Y, ymax=cfg.RANGES.MAX_Y)
+
+    input_ax.set_title('Input')
+    output_ax.set_title('Output')
+    gt_ax.set_title('Ground Truth')
+
+    fig.suptitle('Event '+str(idx).zfill(4))
+
+    if path == '':
+        path = '/'.join(cfg.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
+
+    plt.savefig(path+'event'+str(idx).zfill(4)+'_xy_plane.png')
+    plt.close()
+
+
+
+def pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args):
+
+    R = 250.0
+    thetas = np.linspace(0, 2*np.pi, 1000)
+    xs = R * np.cos(thetas)
+    ys = R * np.sin(thetas)
+    txs = xs[ys >= 0]
+    tys = ys[ys >= 0]
+    bxs = xs[ys < 0]
+    bys = ys[ys < 0]
+
+    fig = plt.figure(figsize=(15, 10))
+    fig.suptitle("Event "+str(idx).zfill(4))
+
+    gs = GridSpec(2, 3)
+
+    iThreeD, oThreeD, gThreeD = plt.subplot(gs[0, 0], projection='3d'), plt.subplot(gs[0, 1], projection='3d'), plt.subplot(gs[0, 2], projection='3d')
+
+    ixs, iys, izs = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], config)
+    oxs, oys, ozs = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], config)
+    gxs, gys, gzs = rescale_feats(gt_pc[:, 0], gt_pc[:, 1], gt_pc[:, 2], config)
+
+    iThreeD.scatter(ixs, izs, iys, s=1)
+    oThreeD.scatter(oxs, ozs, oys, s=1)
+    gThreeD.scatter(gxs, gzs, gys, s=1)
+
+    iThreeD.set_title("Input Cloud 3D View")
+    oThreeD.set_title("Output Cloud 3D View")
+    gThreeD.set_title("Ground Truth Cloud 3D View")
+
+    for ax in [iThreeD, oThreeD, gThreeD]:
+        ax.set_xlabel("X (mm)")
+        ax.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+        ax.set_ylabel("Z (mm)")
+        ax.set_ylim((config.RANGES.MIN_Z, config.RANGES.MAX_Z))
+        ax.set_zlabel("Y (mm)")
+        ax.set_zlim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+        fig.add_subplot(ax)
+
+    iTwoD, oTwoD, gTwoD = plt.subplot(gs[1, 0]), plt.subplot(gs[1, 1]), plt.subplot(gs[1, 2])
+
+    iTwoD.scatter(ixs, iys, s=1)
+    oTwoD.scatter(oxs, oys, s=1)
+    gTwoD.scatter(gxs, gys, s=1)
+
+    for ax in [iTwoD, oTwoD, gTwoD]:
+        ax.plot(txs, tys, color='grey')
+        ax.plot(bxs, bys, color='grey')
+        ax.fill_between(txs, tys, config.RANGES.MAX_Y, color='grey')
+        ax.fill_between(bxs, bys, config.RANGES.MIN_Y, color='grey')
+        if not args.normed:
+            ax.fill_between(np.linspace(-270, -250, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+            ax.fill_between(np.linspace(250, 270, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+        ax.grid(True)
+
+    iTwoD.set_title("Input Cloud Pad Plane View")
+    oTwoD.set_title("Output Cloud Pad Plane View")
+    gTwoD.set_title("Ground Truth Cloud Pad Plane View")
+
+    for ax in [iTwoD, oTwoD, gTwoD]:
+        ax.set_xlabel("X (mm)")
+        ax.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+        ax.set_ylabel("Y (mm)")
+        ax.set_ylim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+        fig.add_subplot(ax)
+
+    path = args.save_img_path
+    if path == '':
+        path = '/'.join(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
+    plt.savefig(path+"event"+str(idx).zfill(4)+"_pp_3d.png")
+    plt.close()
+
+
+def experimental_pad_plane_w_threeD(input_pc, output_pc, idx, path, config):
+
+    R = 250.0
+    thetas = np.linspace(0, 2*np.pi, 1000)
+    xs = R * np.cos(thetas)
+    ys = R * np.sin(thetas)
+    txs = xs[ys >= 0]
+    tys = ys[ys >= 0]
+    bxs = xs[ys < 0]
+    bys = ys[ys < 0]
+
+    ixs, iys, izs = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], config)
+    oxs, oys, ozs = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], config)
+
+    fig = plt.figure(figsize=(10, 10))
+    fig.suptitle("Event "+str(idx).zfill(5))
+
+    gs = GridSpec(2, 2)
+    iThreeD, oThreeD = plt.subplot(gs[0, 0], projection='3d'), plt.subplot(gs[0, 1], projection='3d')
+
+    iThreeD.scatter(ixs, izs, iys, s=1)
+    oThreeD.scatter(oxs, ozs, oys, s=1)
+
+    iThreeD.set_title("Input Cloud 3D View")
+    oThreeD.set_title("Output Cloud 3D View")
+
+    for ax in [iThreeD, oThreeD]:
+        ax.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+        ax.set_xlabel("X (mm)")
+        ax.set_ylim((config.RANGES.MIN_Z, config.RANGES.MAX_Z))
+        ax.set_ylabel("Z (mm)")
+        ax.set_zlim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+        ax.set_zlabel("Y (mm)")
+        fig.add_subplot(ax)
+
+    iTwoD, oTwoD = plt.subplot(gs[1, 0]), plt.subplot(gs[1, 1])
+
+    iTwoD.scatter(ixs, iys, s=1)
+    oTwoD.scatter(oxs, oys, s=1)
+
+    iTwoD.set_title("Input Cloud Pad Plane View")
+    oTwoD.set_title("Output Cloud Pad Plane View")
+
+    for ax in [iTwoD, oTwoD]:
+        ax.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+        ax.set_xlabel("X (mm)")
+        ax.set_ylim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+        ax.set_ylabel("Y (mm)")
+        ax.plot(txs, tys, color='grey')
+        ax.plot(bxs, bys, color='grey')
+        ax.fill_between(txs, tys, config.RANGES.MAX_Y, color='grey')
+        ax.fill_between(bxs, bys, config.RANGES.MIN_Y, color='grey')
+        ax.fill_between(np.linspace(-270, -250, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+        ax.fill_between(np.linspace(250, 270, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+        ax.grid(True)
+        fig.add_subplot(ax)
+
+    if path == '':
+        path = '/'.join(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
+    plt.savefig(path+"event"+str(idx).zfill(4)+"_exp_pp_3d.png")
     plt.close()

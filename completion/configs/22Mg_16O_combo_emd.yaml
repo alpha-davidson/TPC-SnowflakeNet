@@ -1,0 +1,59 @@
+dataset :
+  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_train.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_train.npy
+          }
+  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_val.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_val.npy
+          }
+  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_test.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_test.npy
+          }
+
+
+optimizer : {
+  type: Adam,
+  kwargs: {
+  lr : 0.001, 
+  weight_decay : 0
+}}
+
+
+scheduler: {
+  type: GradualWarmup,
+  kwargs_1: {
+    milestones: [100, 200, 300, 400, 500, 600, 700],
+    gamma : 0.1
+  },
+  kwargs_2: {
+    multiplier: 1,
+    total_epoch: 200
+  }
+}
+            
+model : 
+  dim_feat: 512 
+  num_pc: 256
+  num_p0: 256 
+  radius: 1.0
+  up_factors: [1, 2, 1]
+  bounding : True
+
+
+batch_size : 32
+include_q : False
+num_workers : 4
+step_per_update: 1
+epochs : 5000
+save_freq : 20
+loss_func : emd
+gpu : [0]
+seed : 2024
+
+RANGES : {
+  MIN_X : -270.0,
+  MAX_X : 270.0,
+  MIN_Y : -270.0,
+  MAX_Y : 270.0,
+  MIN_Z : -185.0,
+  MAX_Z : 1155.0
+}

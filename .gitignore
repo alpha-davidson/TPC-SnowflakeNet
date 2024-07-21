@@ -9,3 +9,5 @@ loss_functions/emd/dist/
 loss_functions/emd/emd.egg-info
 models/pointnet2_ops_lib/
 imgs/
+*.npy
+testing.ipynb

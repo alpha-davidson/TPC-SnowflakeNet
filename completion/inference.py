@@ -18,10 +18,9 @@ def get_args_from_command_line():
 
 def my_inference(model, args, config):
 
-    if args.n_imgs == "all":
-        n_imgs_flag = -1
-    else:
-        n_imgs_flag == int(args.n_imgs)
+    n_imgs_flag = -1
+    if args.n_imgs != "all":
+        n_imgs_flag = int(args.n_imgs)
 
     with torch.no_grad():
         
@@ -41,16 +40,17 @@ def my_inference(model, args, config):
             output_pc = ret[-1].squeeze().detach().cpu().numpy()
             gt_pc = gt.squeeze().detach().cpu().numpy()
 
-            # misc.better_img(input_pc, idx)
-            # misc.better_img(output_pc, idx, out=True)
-            # misc.better_img(gt_pc, idx, gt=True)
+            # Output checking
+            assert not (np.any(np.isnan(output_pc)) or np.any(np.isinf(output_pc))), "NaNs or Infs in pred cloud"
+            assert max(np.amax(output_pc[:, :2]), np.abs(np.amin(output_pc[:, :2]))) < config.RANGES.MAX_X, "Predicted point out of bounds in XY plane"
+            assert np.amax(output_pc[:, 2]) < config.RANGES.MAX_Z and np.amin(output_pc) > config.RANGES.MIN_Z, "Predicted point out of bounds in Z dimension"
 
             if args.experimental:
-                misc.experimental_img(input_pc, output_pc, idx, args.save_img_path, config)
+                misc.experimental_pad_plane_w_threeD(input_pc, output_pc, idx, args.save_img_path, config)
             elif args.normed:
                 misc.normed_img(input_pc, output_pc, gt_pc, idx, args.save_img_path, config)
             else:
-                misc.triplet_img(input_pc, output_pc, gt_pc, idx, args.save_img_path, config)
+                misc.pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args)
 
     return
 

@@ -1,41 +1,37 @@
 dataset :
-  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_train.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_train.npy
+  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_train_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_train_labels.npy
           }
-  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_val.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_val.npy
+  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_val_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_val_labels.npy
           }
-  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_test.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_test.npy
+  test  : { partial : /home/DAVIDSON/bewagner/data/14C/filtered384_384sampled.npy,
+            complete : /home/DAVIDSON/bewagner/data/14C/filtered384_384sampled.npy
           }
 
 
 optimizer : {
   type: Adam,
   kwargs: {
-  lr : 0.000001, 
+  lr : 0.001, 
   weight_decay : 0
 }}
 
 
-# scheduler: {
-#   type: GradualWarmup,
-#   kwargs_1: {
-#     milestones: [100, 200, 300, 400, 500, 600, 700],
-#     gamma : 0.1
-#   },
-#   kwargs_2: {
-#     multiplier: 1,
-#     total_epoch: 200
-#   }
-# }
+scheduler: {
+  type: StepLR,
+  kwargs: {
+    step_size: 150,
+    gamma : 0.1
+  }
+}
             
 model : 
   dim_feat: 512 
   num_pc: 128
-  num_p0: 128 
+  num_p0: 256 
   radius: 1.0
-  up_factors: [1, 2, 2]
+  up_factors: [2, 1]
   bounding : True
 
 

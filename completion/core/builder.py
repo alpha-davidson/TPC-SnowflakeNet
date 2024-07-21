@@ -75,13 +75,16 @@ def make_optimizer(config, model):
 
 
 def make_scheduler(config, optimizer, last_epoch=-1):
+    print(config, config.type, config.type=="GradualWarmup")
     if config.type == 'StepLR':
         scheduler = StepLR(optimizer, **config.kwargs, last_epoch=last_epoch)
     elif config.type == 'LambdaLR':
         scheduler = build_lambda_sche(optimizer, config.kwargs)  # misc.py
     elif config.type == "GradualWarmup":
-        scheduler_steplr = MultiStepLR(optimizer, last_epoch=last_epoch, **config.kwargs_1)
+        scheduler_steplr = StepLR(optimizer, last_epoch=last_epoch, **config.kwargs_1)
         scheduler = GradualWarmupScheduler(optimizer, after_scheduler=scheduler_steplr, **config.kwargs_2)
+    elif config.type == 'MultiStepLR':
+        scheduler = MultiStepLR(optimizer, **config.kwargs, last_epoch=last_epoch)
     else:
         raise Exception('scheduler {} not supported yet!'.format(config.type))
 
