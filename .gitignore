@@ -11,3 +11,4 @@ models/pointnet2_ops_lib/
 imgs/
 *.npy
 testing.ipynb
+*/__pycache__/*

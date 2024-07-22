@@ -8,17 +8,22 @@ This repository contains the source code for the papers:
 
 [<img src="../pics/completion.png" width="100%" alt="Intro pic" />](../pics/completion.png)
 
+The code in this repository has been adapted by [Ben Wagner](https://github.com/bewagner1) for ALPhA usage.
+
 ## Datasets
 
-We use the [PCN](https://www.shapenet.org/), [ShapeNet-34/21](https://github.com/yuxumin/PoinTr), and [Compeletion3D](http://completion3d.stanford.edu/) datasets in our experiments, which are available below:
-
-- [PCN](https://drive.google.com/drive/folders/1P_W1tz5Q4ZLapUifuOE4rFAZp6L1XTJz)
-- [ShapeNet-34/21](https://github.com/yuxumin/PoinTr/blob/master/DATASET.md)
-- [Completion3D](https://completion3d.stanford.edu/)
+#### For ALPhA use the following datasets were used:
+##### Training
+- Simulated 22Mg + alpha
+- Simulated 16O + alpha
+- A combination of the above was primarily used, with events filtered to a minimum of 128 unique points and sampled to 512 points for a complete event
+##### Inferencing
+- Test set from the simulated 22Mg + alpha and simulated 16O + alpha combined dataset
+- Experimental 14C
 
 ## Getting Started
 
-To use our code, make sure that the environment and PyTorch extensions are installed according to the instructions in the [main page](https://raw.githubusercontent.com/AllenXiangX/SnowflakeNet). Then modify the dataset path in the [configuration files](https://github.com/AllenXiangX/SnowflakeNet/tree/main/completion/configs).
+To use our code, make sure that the environment and PyTorch extensions are installed according to the instructions in the [main page](https://raw.githubusercontent.com/AllenXiangX/SnowflakeNet).
 
 
 ## Training
@@ -26,13 +31,13 @@ To use our code, make sure that the environment and PyTorch extensions are insta
 To train a point cloud completion model from scratch, run:
 
 ```
-python train.py --configs <config>
+python train.py --config <config> --exp_name <training_name> <other_args>
 ```
 
 For example:
 
 ```
-python train.py --configs ./configs/pcn_cd1.yaml
+python train.py --config ./configs/22Mg_16O_combo.yaml --exp_name 22Mg_16O_center_cutting
 ```
 
 ## Evaluation
@@ -40,13 +45,27 @@ python train.py --configs ./configs/pcn_cd1.yaml
 To evaluate a pre-trained model, first specify the model_path in configuration file, then run:
 
 ```
-python test.py --configs <config>
+python test.py --config <config> --model <path/to/model/checkpoint>
 ```
 
 For example:
 
 ```
-python test.py --configs ./configs/pcn_cd1.yaml
+python test.py --config ./configs/22Mg_16O_combo.yaml --model ./exp/checkpoints/22Mg_16O_center_cutting/ckpts-best.pth
+```
+
+## Inferences
+
+To use a pre-trained model to inference on a the test set, run:
+
+```
+python inference.py --config <config> <other_args>
+```
+
+For example
+
+```
+python inference.py --config ./configs/22Mg_16O_combo.yaml --model ./exp/checkpoints/22Mg_16O_center_cutting/ckpts-best.pth --normed
 ```
 
 ## Acknowledgements

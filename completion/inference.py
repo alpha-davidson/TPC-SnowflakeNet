@@ -8,7 +8,7 @@ import argparse
 def get_args_from_command_line():
     parser = argparse.ArgumentParser(description='The argument parser of SnowflakeNet')
     parser.add_argument('--config', type=str, default=None, help='Configuration File')
-    parser.add_argument('--checkpoint_path', type=str, default=None, help='Path to model checkpoint')
+    parser.add_argument('--model', type=str, default=None, help='Path to model checkpoint')
     parser.add_argument('--n_imgs', type=str, default="10", help='Number of images to save: default is 10, if \"all\" is passed all images will be saved')
     parser.add_argument('--save_img_path', type=str, default="", help='Where to save images')
     parser.add_argument('--experimental', action="store_true", default=False, help='No ground truth provided')
