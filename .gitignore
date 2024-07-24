@@ -6,8 +6,9 @@ loss_functions/Chamfer3D/chamfer_3D.egg-info/
 loss_functions/Chamfer3D/dist/
 loss_functions/emd/build/
 loss_functions/emd/dist/
-loss_functions/emd/emd.egg-info
-models/pointnet2_ops_lib/
+loss_functions/emd/emd.egg-info/
+models/pointnet2_ops_lib/build/
+models/pointnet2_ops_lib/pointnet2_ops.egg-info/
 imgs/
 *.npy
 testing.ipynb
