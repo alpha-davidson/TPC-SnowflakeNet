@@ -1,0 +1,67 @@
+dataset :
+  train : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/filtered_my_sample_rand_cut_train_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/filtered_my_sample_rand_cut_train_labels.npy
+          }
+  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/filtered_my_sample_rand_cut_val_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/filtered_my_sample_rand_cut_val_labels.npy
+          }
+  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/384p/filtered_my_sample_rand_cut_train_labels.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg/simulated/512c/filtered_my_sample_rand_cut_test_labels.npy
+          }
+
+
+optimizer : {
+  type: Adam,
+  kwargs: {
+  lr : 0.001, 
+  weight_decay : 0
+}}
+
+
+scheduler: {
+  type: GradualWarmup,
+  kwargs_1: {
+    step_size: 100,
+    gamma : 0.1
+  },
+  kwargs_2: {
+    multiplier: 1,
+    total_epoch: 200,
+  }
+}
+
+# scheduler: {
+#   type: StepLR,
+#   kwargs: {
+#     step_size: 100,
+#     gamma : 0.1
+#   }
+# }
+            
+model : 
+  dim_feat: 512 
+  num_pc: 128
+  num_p0: 256
+  radius: 1.0
+  up_factors: [2, 1]
+  bounding : True
+
+
+batch_size : 1
+include_q : False
+num_workers : 4
+step_per_update: 1
+epochs : 1_000
+save_freq : 20
+loss_func : cd_l1
+gpu : [0]
+seed : 2024
+
+RANGES : {
+  MIN_X : -270.0,
+  MAX_X : 270.0,
+  MIN_Y : -270.0,
+  MAX_Y : 270.0,
+  MIN_Z : -185.0,
+  MAX_Z : 1155.0
+}

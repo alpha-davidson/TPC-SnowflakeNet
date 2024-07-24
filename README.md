@@ -57,6 +57,7 @@ under widely used benchmarks.
 ```
 
 ## [Getting Started]
+The only subdirectory modified for ALPhA use has so far been [completion](https://github.com/alpha-davidson/TPC-SnowflakeNet/tree/main/completion)
 
 #### Build Environment
 
