@@ -3,13 +3,13 @@ import torch
 sys.path.append('..')
 
 # from loss_functions import chamfer_l1, chamfer_l2, chamfer_partial_l1, chamfer_partial_l2, emd_loss
-from loss_functions import chamfer_3DDist, emdModule
+from loss_functions import chamfer_4DDist, emdModule
 from models.utils import fps_subsample
 
 class Completionloss:
     def __init__(self, loss_func='cd_l1'):
         self.loss_func = loss_func
-        self.chamfer_dist = chamfer_3DDist()
+        self.chamfer_dist = chamfer_4DDist()
         self.EMD = torch.nn.DataParallel(emdModule().cuda()).cuda()
 
         if loss_func == 'cd_l1':
@@ -107,12 +107,11 @@ class Completionloss:
 
 
 if __name__ == '__main__':
-    gt = torch.randn(10, 2048, 3).cuda()
-    pc = torch.randn(10, 256, 3).cuda()
-    p1 = torch.randn(10, 512, 3).cuda()
-    p2 = torch.randn(10, 1024, 3).cuda()
-    p3 = torch.randn(10, 2048, 3).cuda()
-
-
-    # loss = get_loss([pc, p1, p2, p3], gt, gt, 'emd')[0]
-    # print(loss.item())
+    gt = torch.randn(10, 2048, 4).cuda()
+    pc = torch.randn(10, 256, 4).cuda()
+    p1 = torch.randn(10, 512, 4).cuda()
+    p2 = torch.randn(10, 1024, 4).cuda()
+    p3 = torch.randn(10, 2048, 4).cuda()
+    loss = Completionloss(loss_func='cd_l1')
+    losses = loss.get_loss([pc, p1, p2, p3], gt, gt)
+    print(losses[0].item())

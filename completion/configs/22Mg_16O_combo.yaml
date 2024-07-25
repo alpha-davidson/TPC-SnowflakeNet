@@ -36,7 +36,7 @@ model :
 
 
 batch_size : 32
-include_q : False
+include_q : True
 num_workers : 4
 step_per_update: 1
 epochs : 5000
@@ -51,5 +51,7 @@ RANGES : {
   MIN_Y : -270.0,
   MAX_Y : 270.0,
   MIN_Z : -185.0,
-  MAX_Z : 1155.0
+  MAX_Z : 1155.0, 
+  MIN_Q : 0,
+  MAX_Q : 0
 }
