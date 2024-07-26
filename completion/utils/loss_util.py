@@ -107,11 +107,16 @@ class Completionloss:
 
 
 if __name__ == '__main__':
-    gt = torch.randn(10, 2048, 4).cuda()
-    pc = torch.randn(10, 256, 4).cuda()
-    p1 = torch.randn(10, 512, 4).cuda()
-    p2 = torch.randn(10, 1024, 4).cuda()
-    p3 = torch.randn(10, 2048, 4).cuda()
+    import numpy as np
+    feats = np.load("/home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/center_cut_train_feats.npy")
+    labels = np.load("/home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/center_cut_train_labels.npy")
+    dummy = np.zeros((2, 128, 4))
+    pred = np.concatenate((feats[:2], dummy), axis=1)
+    pred = torch.Tensor(pred).cuda()
+    gt = labels[:2]
+    gt = torch.Tensor(gt).cuda()
+    partial = feats[:2]
+    partial = torch.Tensor(partial).cuda()
     loss = Completionloss(loss_func='cd_l1')
-    losses = loss.get_loss([pc, p1, p2, p3], gt, gt)
-    print(losses[0].item())
+    losses = loss.get_loss([pred, pred, pred, pred], gt, gt)
+    print(losses)

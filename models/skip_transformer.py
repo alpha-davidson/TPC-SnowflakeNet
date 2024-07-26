@@ -16,7 +16,7 @@ class SkipTransformer(nn.Module):
         self.conv_value = nn.Conv1d(in_channel, dim, 1)
 
         self.pos_mlp = nn.Sequential(
-            nn.Conv2d(3, pos_hidden_dim, 1),
+            nn.Conv2d(4, pos_hidden_dim, 1),
             nn.BatchNorm2d(pos_hidden_dim),
             nn.ReLU(),
             nn.Conv2d(pos_hidden_dim, dim, 1)

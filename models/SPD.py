@@ -20,7 +20,7 @@ class SPD(nn.Module):
         self.global_feat = global_feat
         self.ps_dim = 32 if global_feat else 64
 
-        self.mlp_1 = MLP_CONV(in_channel=3, layer_dims=[64, 128])
+        self.mlp_1 = MLP_CONV(in_channel=4, layer_dims=[64, 128])
         self.mlp_2 = MLP_CONV(in_channel=128 * 2 + dim_feat if self.global_feat else 128, layer_dims=[256, 128])
 
         self.skip_transformer = SkipTransformer(in_channel=128, dim=64)
@@ -31,7 +31,7 @@ class SPD(nn.Module):
         self.up_sampler = nn.Upsample(scale_factor=up_factor)
         self.mlp_delta_feature = MLP_Res(in_dim=256, hidden_dim=128, out_dim=128)
 
-        self.mlp_delta = MLP_CONV(in_channel=128, layer_dims=[64, 3])
+        self.mlp_delta = MLP_CONV(in_channel=128, layer_dims=[64, 4])
 
     def forward(self, pcd_prev, feat_global=None, K_prev=None):
         """

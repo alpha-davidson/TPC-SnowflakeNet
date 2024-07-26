@@ -149,8 +149,8 @@ def sample_and_group_all(xyz, points, use_xyz=True):
     """
     b, _, nsample = xyz.shape
     device = xyz.device
-    new_xyz = torch.zeros((1, 3, 1), dtype=torch.float, device=device).repeat(b, 1, 1)
-    grouped_xyz = xyz.reshape((b, 3, 1, nsample))
+    new_xyz = torch.zeros((1, 4, 1), dtype=torch.float, device=device).repeat(b, 1, 1)
+    grouped_xyz = xyz.reshape((b, 4, 1, nsample))
     idx = torch.arange(nsample, device=device).reshape(1, 1, nsample).repeat(b, 1, 1)
     if points is not None:
         if use_xyz:
@@ -349,7 +349,7 @@ class PointNet_SA_Module_KNN(nn.Module):
         self.use_xyz = use_xyz
         self.if_idx = if_idx
         if use_xyz:
-            in_channel += 3
+            in_channel += 4
 
         last_channel = in_channel
         self.mlp_conv = []
@@ -405,7 +405,7 @@ class Transformer(nn.Module):
         self.conv_value = nn.Conv1d(dim, dim, 1)
 
         self.pos_mlp = nn.Sequential(
-            nn.Conv2d(3, pos_hidden_dim, 1),
+            nn.Conv2d(4, pos_hidden_dim, 1),
             nn.BatchNorm2d(pos_hidden_dim),
             nn.ReLU(),
             nn.Conv2d(pos_hidden_dim, dim, 1)

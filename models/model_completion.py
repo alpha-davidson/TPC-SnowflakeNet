@@ -12,7 +12,7 @@ class FeatureExtractor(nn.Module):
         """Encoder that encodes information of partial point cloud
         """
         super(FeatureExtractor, self).__init__()
-        self.sa_module_1 = PointNet_SA_Module_KNN(512, 16, 3, [64, 128], group_all=False, if_bn=False, if_idx=True)
+        self.sa_module_1 = PointNet_SA_Module_KNN(512, 16, 4, [64, 128], group_all=False, if_bn=False, if_idx=True)
         self.transformer_1 = Transformer(128, dim=64)
         self.sa_module_2 = PointNet_SA_Module_KNN(128, 16, 128, [128, 256], group_all=False, if_bn=False, if_idx=True)
         self.transformer_2 = Transformer(256, dim=64)
@@ -48,7 +48,7 @@ class SeedGenerator(nn.Module):
         self.mlp_4 = nn.Sequential(
             nn.Conv1d(128, 64, 1),
             nn.ReLU(),
-            nn.Conv1d(64, 3, 1)
+            nn.Conv1d(64, 4, 1)
         )
 
     def forward(self, feat):
