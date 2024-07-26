@@ -22,3 +22,4 @@ testing.ipynb
 completion/__pycache__/
 completion/core/__pycache__/
 completion/utils/__pycache__/
+transformer_list.txt

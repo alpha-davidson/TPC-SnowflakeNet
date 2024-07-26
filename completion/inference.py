@@ -64,9 +64,9 @@ if __name__ == "__main__":
     config = yaml_reader.read_yaml(args.config)
 
     model = builder.make_model(config)
-    if args.checkpoint_path is None:
+    if args.model is None:
         raise ValueError("No model path provided")
-    misc.load_model(model, args.checkpoint_path)
+    misc.load_model(model, args.model)
     model.to("cuda:0".lower())
     model.eval()
     my_inference(model, args, config)

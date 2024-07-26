@@ -5,8 +5,8 @@ dataset :
   val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_val_feats.npy,
             complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_val_labels.npy
           }
-  test  : { partial : /home/DAVIDSON/bewagner/data/14C/filtered384_384sampled.npy,
-            complete : /home/DAVIDSON/bewagner/data/14C/filtered384_384sampled.npy
+  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_test_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_test_labels.npy
           }
 
 
@@ -52,6 +52,6 @@ RANGES : {
   MAX_Y : 270.0,
   MIN_Z : -185.0,
   MAX_Z : 1155.0, 
-  MIN_Q : 0,
-  MAX_Q : 0
+  MIN_Q : 1.0,
+  MAX_Q : 10.2
 }
