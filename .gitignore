@@ -16,6 +16,7 @@ loss_functions/emd/emd.egg-info/
 models/__pycache__/
 models/pointnet2_ops_lib/build/
 models/pointnet2_ops_lib/pointnet2_ops.egg-info/
+model/pointnet2_ops_lib/dist/
 imgs/
 *.npy
 testing.ipynb
