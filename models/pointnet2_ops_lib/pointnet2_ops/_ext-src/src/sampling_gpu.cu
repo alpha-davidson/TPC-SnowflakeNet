@@ -75,7 +75,7 @@ __global__ void furthest_point_sampling_kernel(
   __shared__ int dists_i[block_size];
 
   int batch_index = blockIdx.x;
-  dataset += batch_index * n * 3;
+  dataset += batch_index * n * 4;
   temp += batch_index * n;
   idxs += batch_index * m;
 
@@ -89,19 +89,21 @@ __global__ void furthest_point_sampling_kernel(
   for (int j = 1; j < m; j++) {
     int besti = 0;
     float best = -1;
-    float x1 = dataset[old * 3 + 0];
-    float y1 = dataset[old * 3 + 1];
-    float z1 = dataset[old * 3 + 2];
+    float x1 = dataset[old * 4 + 0];
+    float y1 = dataset[old * 4 + 1];
+    float z1 = dataset[old * 4 + 2];
+    float q1 = dataset[old * 4 + 3];
     for (int k = tid; k < n; k += stride) {
-      float x2, y2, z2;
-      x2 = dataset[k * 3 + 0];
-      y2 = dataset[k * 3 + 1];
-      z2 = dataset[k * 3 + 2];
-      float mag = (x2 * x2) + (y2 * y2) + (z2 * z2);
+      float x2, y2, z2, q2;
+      x2 = dataset[k * 4 + 0];
+      y2 = dataset[k * 4 + 1];
+      z2 = dataset[k * 4 + 2];
+      q2 = dataset[k * 4 + 3];
+      float mag = (x2 * x2) + (y2 * y2) + (z2 * z2) + (q2 * q2);
       if (mag <= 1e-3) continue;
 
       float d =
-          (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1);
+          (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1) + (q2 - q1) * (q2 - q1);
 
       float d2 = min(d, temp[k]);
       temp[k] = d2;

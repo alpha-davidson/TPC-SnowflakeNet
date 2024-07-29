@@ -12,26 +12,30 @@ __global__ void three_nn_kernel(int b, int n, int m,
                                 float *__restrict__ dist2,
                                 int *__restrict__ idx) {
   int batch_index = blockIdx.x;
-  unknown += batch_index * n * 3;
-  known += batch_index * m * 3;
-  dist2 += batch_index * n * 3;
-  idx += batch_index * n * 3;
+  unknown += batch_index * n * 4;
+  known += batch_index * m * 4;
+  dist2 += batch_index * n * 4;
+  idx += batch_index * n * 4;
 
   int index = threadIdx.x;
   int stride = blockDim.x;
   for (int j = index; j < n; j += stride) {
-    float ux = unknown[j * 3 + 0];
-    float uy = unknown[j * 3 + 1];
-    float uz = unknown[j * 3 + 2];
+    float ux = unknown[j * 4 + 0];
+    float uy = unknown[j * 4 + 1];
+    float uz = unknown[j * 4 + 2];
+    float uq = unknown[j * 4 + 3];
 
-    double best1 = 1e40, best2 = 1e40, best3 = 1e40;
-    int besti1 = 0, besti2 = 0, besti3 = 0;
+    double best1 = 1e40, best2 = 1e40, best3 = 1e40, best4 = 1e40;
+    int besti1 = 0, besti2 = 0, besti3 = 0, besti4 = 0;
     for (int k = 0; k < m; ++k) {
-      float x = known[k * 3 + 0];
-      float y = known[k * 3 + 1];
-      float z = known[k * 3 + 2];
-      float d = (ux - x) * (ux - x) + (uy - y) * (uy - y) + (uz - z) * (uz - z);
+      float x = known[k * 4 + 0];
+      float y = known[k * 4 + 1];
+      float z = known[k * 4 + 2];
+      float q = known[k * 4 + 3];
+      float d = (ux - x) * (ux - x) + (uy - y) * (uy - y) + (uz - z) * (uz - z) + (uq - q) * (uq - q);
       if (d < best1) {
+        best4 = best3;
+        besti4 = besti3;
         best3 = best2;
         besti3 = besti2;
         best2 = best1;
@@ -39,22 +43,31 @@ __global__ void three_nn_kernel(int b, int n, int m,
         best1 = d;
         besti1 = k;
       } else if (d < best2) {
+        best4 = best3;
+        besti4 = besti3;
         best3 = best2;
         besti3 = besti2;
         best2 = d;
         besti2 = k;
       } else if (d < best3) {
+        best4 = best3;
+        besti4 = besti3;
         best3 = d;
         besti3 = k;
+      } else if (d < best4) {
+        best4 = d;
+        besti4 = k;
       }
     }
-    dist2[j * 3 + 0] = best1;
-    dist2[j * 3 + 1] = best2;
-    dist2[j * 3 + 2] = best3;
+    dist2[j * 4 + 0] = best1;
+    dist2[j * 4 + 1] = best2;
+    dist2[j * 4 + 2] = best3;
+    dist2[j * 4 + 3] = best4;
 
-    idx[j * 3 + 0] = besti1;
-    idx[j * 3 + 1] = besti2;
-    idx[j * 3 + 2] = besti3;
+    idx[j * 4 + 0] = besti1;
+    idx[j * 4 + 1] = besti2;
+    idx[j * 4 + 2] = besti3;
+    idx[j * 4 + 3] = besti4;
   }
 }
 
@@ -77,8 +90,8 @@ __global__ void three_interpolate_kernel(int b, int c, int m, int n,
   int batch_index = blockIdx.x;
   points += batch_index * m * c;
 
-  idx += batch_index * n * 3;
-  weight += batch_index * n * 3;
+  idx += batch_index * n * 4;
+  weight += batch_index * n * 4;
 
   out += batch_index * n * c;
 
@@ -87,16 +100,18 @@ __global__ void three_interpolate_kernel(int b, int c, int m, int n,
   for (int i = index; i < c * n; i += stride) {
     const int l = i / n;
     const int j = i % n;
-    float w1 = weight[j * 3 + 0];
-    float w2 = weight[j * 3 + 1];
-    float w3 = weight[j * 3 + 2];
+    float w1 = weight[j * 4 + 0];
+    float w2 = weight[j * 4 + 1];
+    float w3 = weight[j * 4 + 2];
+    float w4 = weight[j * 4 + 3];
 
-    int i1 = idx[j * 3 + 0];
-    int i2 = idx[j * 3 + 1];
-    int i3 = idx[j * 3 + 2];
+    int i1 = idx[j * 4 + 0];
+    int i2 = idx[j * 4 + 1];
+    int i3 = idx[j * 4 + 2];
+    int i4 = idx[j * 4 + 3];
 
     out[i] = points[l * m + i1] * w1 + points[l * m + i2] * w2 +
-             points[l * m + i3] * w3;
+             points[l * m + i3] * w3 + points[l * m + i4] * w4;
   }
 }
 
@@ -119,8 +134,8 @@ __global__ void three_interpolate_grad_kernel(
     float *__restrict__ grad_points) {
   int batch_index = blockIdx.x;
   grad_out += batch_index * n * c;
-  idx += batch_index * n * 3;
-  weight += batch_index * n * 3;
+  idx += batch_index * n * 4;
+  weight += batch_index * n * 4;
   grad_points += batch_index * m * c;
 
   const int index = threadIdx.y * blockDim.x + threadIdx.x;
@@ -128,17 +143,20 @@ __global__ void three_interpolate_grad_kernel(
   for (int i = index; i < c * n; i += stride) {
     const int l = i / n;
     const int j = i % n;
-    float w1 = weight[j * 3 + 0];
-    float w2 = weight[j * 3 + 1];
-    float w3 = weight[j * 3 + 2];
+    float w1 = weight[j * 4 + 0];
+    float w2 = weight[j * 4 + 1];
+    float w3 = weight[j * 4 + 2];
+    float w4 = weight[j * 4 + 3];
 
-    int i1 = idx[j * 3 + 0];
-    int i2 = idx[j * 3 + 1];
-    int i3 = idx[j * 3 + 2];
+    int i1 = idx[j * 4 + 0];
+    int i2 = idx[j * 4 + 1];
+    int i3 = idx[j * 4 + 2];
+    int i4 = idx[j * 4 + 3];
 
     atomicAdd(grad_points + l * m + i1, grad_out[i] * w1);
     atomicAdd(grad_points + l * m + i2, grad_out[i] * w2);
     atomicAdd(grad_points + l * m + i3, grad_out[i] * w3);
+    atomicAdd(grad_points + l * m + i4, grad_out[i] * w4);
   }
 }
 

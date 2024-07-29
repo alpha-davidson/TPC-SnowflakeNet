@@ -12,7 +12,7 @@ def get_args_from_command_line():
     parser.add_argument('--n_imgs', type=str, default="10", help='Number of images to save: default is 10, if \"all\" is passed all images will be saved')
     parser.add_argument('--save_img_path', type=str, default="", help='Where to save images')
     parser.add_argument('--experimental', action="store_true", default=False, help='No ground truth provided')
-    parser.add_argument('--normed', action="store_true", default=False, help='Keep scaling of images to 0-1')
+    parser.add_argument('--debug', action="store_true", default=False, help='Save all model outputs in seperate images')
     args = parser.parse_args()
     return args
 
@@ -47,8 +47,11 @@ def my_inference(model, args, config):
 
             if args.experimental:
                 misc.experimental_pad_plane_w_threeD(input_pc, output_pc, idx, args.save_img_path, config)
-            elif args.normed:
-                misc.normed_img(input_pc, output_pc, gt_pc, idx, args.save_img_path, config)
+            elif args.debug:
+                clouds = []
+                for c in ret:
+                    clouds.append(c.squeeze().detach().cpu().numpy())
+                misc.debug_img(clouds, idx, args.save_img_path, config)
             else:
                 misc.pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args)
 

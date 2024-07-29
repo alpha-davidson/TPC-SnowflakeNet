@@ -333,3 +333,18 @@ def experimental_pad_plane_w_threeD(input_pc, output_pc, idx, path, config):
         path = '/'.join(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
     plt.savefig(path+"event"+str(idx).zfill(4)+"_exp_pp_3d.png")
     plt.close()
+
+
+def debug_img(clouds, idx, path, config):
+
+    for i, c in enumerate(clouds):
+        fig, ax = plt.subplots(1, 1, figsize=(12, 6), subplot_kw=dict(projection='3d'))
+        ax.scatter(c[:, 0], c[:, 2], c[:, 1], c=c[:, 3], cmap='copper', s=1)
+        ax.set_xlim((0,1))
+        ax.set_ylim((0,1))
+        ax.set_zlim((0,1))
+
+        if path == '':
+            path = '/'.joing(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
+        plt.savefig(path+"event"+str(idx).zfill(4)+"_"+str(i)+"debug_img.png")
+        plt.close()

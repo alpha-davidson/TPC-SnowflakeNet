@@ -4,7 +4,7 @@
 
 #include "cuda_utils.h"
 
-// input: new_xyz(b, m, 3) xyz(b, n, 3)
+// input: new_xyz(b, m, 4) xyz(b, n, 4)
 // output: idx(b, m, nsample)
 __global__ void query_ball_point_kernel(int b, int n, int m, float radius,
                                         int nsample,
@@ -12,8 +12,8 @@ __global__ void query_ball_point_kernel(int b, int n, int m, float radius,
                                         const float *__restrict__ xyz,
                                         int *__restrict__ idx) {
   int batch_index = blockIdx.x;
-  xyz += batch_index * n * 3;
-  new_xyz += batch_index * m * 3;
+  xyz += batch_index * n * 4;
+  new_xyz += batch_index * m * 4;
   idx += m * nsample * batch_index;
 
   int index = threadIdx.x;
@@ -21,15 +21,17 @@ __global__ void query_ball_point_kernel(int b, int n, int m, float radius,
 
   float radius2 = radius * radius;
   for (int j = index; j < m; j += stride) {
-    float new_x = new_xyz[j * 3 + 0];
-    float new_y = new_xyz[j * 3 + 1];
-    float new_z = new_xyz[j * 3 + 2];
+    float new_x = new_xyz[j * 4 + 0];
+    float new_y = new_xyz[j * 4 + 1];
+    float new_z = new_xyz[j * 4 + 2];
+    float new_q = new_xyz[j * 4 + 3];
     for (int k = 0, cnt = 0; k < n && cnt < nsample; ++k) {
-      float x = xyz[k * 3 + 0];
-      float y = xyz[k * 3 + 1];
-      float z = xyz[k * 3 + 2];
+      float x = xyz[k * 4 + 0];
+      float y = xyz[k * 4 + 1];
+      float z = xyz[k * 4 + 2];
+      float q = xyz[k * 4 + 3];
       float d2 = (new_x - x) * (new_x - x) + (new_y - y) * (new_y - y) +
-                 (new_z - z) * (new_z - z);
+                 (new_z - z) * (new_z - z) + (new_q - q) * (new_q - q);
       if (d2 < radius2) {
         if (cnt == 0) {
           for (int l = 0; l < nsample; ++l) {
