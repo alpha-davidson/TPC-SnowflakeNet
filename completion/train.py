@@ -103,7 +103,7 @@ def train(config, args):
     for epoch_idx in range(init_epoch, config.epochs+1):
         avg_meter_loss.reset()
         model.train()
-        print([l for l in ['loss_partial', 'loss_pc', 'loss_p1', 'loss_output', 'loss_total']])
+        print(['loss_partial', 'loss_pc', 'loss_p1', 'loss_output', 'loss_total'])
         for batch_idx, (feats, labels) in enumerate(train_dataloader):
             
             partial = feats.cuda()
