@@ -34,7 +34,7 @@ def my_inference(model, args, config):
             partial = feats.cuda()
             gt = labels.cuda()
 
-            ret = model(partial)
+            ret = model(partial, return_P0=True)
 
             input_pc = partial.squeeze().detach().cpu().numpy()
             output_pc = ret[-1].squeeze().detach().cpu().numpy()
