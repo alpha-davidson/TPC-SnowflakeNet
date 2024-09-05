@@ -8,7 +8,7 @@ void gather_points_grad_kernel_wrapper(int b, int c, int n, int npoints,
                                        const float *grad_out, const int *idx,
                                        float *grad_points);
 
-void furthest_point_sampling_kernel_wrapper(int b, int n, int m,
+void furthest_point_sampling_kernel_wrapper(int b, int n, int m, int point_dim,
                                             const float *dataset, float *temp,
                                             int *idxs);
 
@@ -77,7 +77,7 @@ at::Tensor furthest_point_sampling(at::Tensor points, const int nsamples) {
 
   if (points.is_cuda()) {
     furthest_point_sampling_kernel_wrapper(
-        points.size(0), points.size(1), nsamples, points.data_ptr<float>(),
+        points.size(0), points.size(1), nsamples, points.size(2), points.data_ptr<float>(),
         tmp.data_ptr<float>(), output.data_ptr<int>());
   } else {
     AT_ASSERT(false, "CPU not supported");

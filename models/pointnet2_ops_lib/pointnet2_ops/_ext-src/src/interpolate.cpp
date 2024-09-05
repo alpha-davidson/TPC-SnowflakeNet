@@ -1,12 +1,12 @@
 #include "interpolate.h"
 #include "utils.h"
 
-void three_nn_kernel_wrapper(int b, int n, int m, const float *unknown,
+void three_nn_kernel_wrapper(int b, int n, int m, int point_dim, const float *unknown,
                              const float *known, float *dist2, int *idx);
-void three_interpolate_kernel_wrapper(int b, int c, int m, int n,
+void three_interpolate_kernel_wrapper(int b, int c, int m, int n, int point_dim,
                                       const float *points, const int *idx,
                                       const float *weight, float *out);
-void three_interpolate_grad_kernel_wrapper(int b, int c, int n, int m,
+void three_interpolate_grad_kernel_wrapper(int b, int c, int n, int m, int point_dim,
                                            const float *grad_out,
                                            const int *idx, const float *weight,
                                            float *grad_points);
@@ -22,14 +22,14 @@ std::vector<at::Tensor> three_nn(at::Tensor unknowns, at::Tensor knows) {
   }
 
   at::Tensor idx =
-      torch::zeros({unknowns.size(0), unknowns.size(1), 3},
+      torch::zeros({unknowns.size(0), unknowns.size(1), unknowns.size(2)},
                    at::device(unknowns.device()).dtype(at::ScalarType::Int));
   at::Tensor dist2 =
-      torch::zeros({unknowns.size(0), unknowns.size(1), 3},
+      torch::zeros({unknowns.size(0), unknowns.size(1), unknowns.size(2)},
                    at::device(unknowns.device()).dtype(at::ScalarType::Float));
 
   if (unknowns.is_cuda()) {
-    three_nn_kernel_wrapper(unknowns.size(0), unknowns.size(1), knows.size(1),
+    three_nn_kernel_wrapper(unknowns.size(0), unknowns.size(1), knows.size(1), unknowns.size(2),
                             unknowns.data_ptr<float>(), knows.data_ptr<float>(),
                             dist2.data_ptr<float>(), idx.data_ptr<int>());
   } else {
@@ -59,7 +59,7 @@ at::Tensor three_interpolate(at::Tensor points, at::Tensor idx,
 
   if (points.is_cuda()) {
     three_interpolate_kernel_wrapper(
-        points.size(0), points.size(1), points.size(2), idx.size(1),
+        points.size(0), points.size(1), points.size(2), idx.size(1), unknowns.size(2),
         points.data_ptr<float>(), idx.data_ptr<int>(), weight.data_ptr<float>(),
         output.data_ptr<float>());
   } else {
@@ -88,7 +88,7 @@ at::Tensor three_interpolate_grad(at::Tensor grad_out, at::Tensor idx,
 
   if (grad_out.is_cuda()) {
     three_interpolate_grad_kernel_wrapper(
-        grad_out.size(0), grad_out.size(1), grad_out.size(2), m,
+        grad_out.size(0), grad_out.size(1), grad_out.size(2), m, unknowns.size(2),
         grad_out.data_ptr<float>(), idx.data_ptr<int>(),
         weight.data_ptr<float>(), output.data_ptr<float>());
   } else {

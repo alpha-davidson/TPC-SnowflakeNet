@@ -68,7 +68,7 @@ __device__ void __update(float *__restrict__ dists, int *__restrict__ dists_i,
 // Ouput idxs (b, m)
 template <unsigned int block_size>
 __global__ void furthest_point_sampling_kernel(
-    int b, int n, int m, const float *__restrict__ dataset,
+    int b, int n, int m, int point_dim, const float *__restrict__ dataset,
     float *__restrict__ temp, int *__restrict__ idxs) {
   if (m <= 0) return;
   __shared__ float dists[block_size];
@@ -89,21 +89,33 @@ __global__ void furthest_point_sampling_kernel(
   for (int j = 1; j < m; j++) {
     int besti = 0;
     float best = -1;
-    float x1 = dataset[old * 4 + 0];
-    float y1 = dataset[old * 4 + 1];
-    float z1 = dataset[old * 4 + 2];
-    float q1 = dataset[old * 4 + 3];
+    float x1, y1, z1, q1;
+    x1 = dataset[old * point_dim + 0];
+    y1 = dataset[old * point_dim + 1];
+    z1 = dataset[old * point_dim + 2];
+    if (point_dim == 4) {
+      q1 = dataset[old * point_dim + 3];
+    }
     for (int k = tid; k < n; k += stride) {
       float x2, y2, z2, q2;
-      x2 = dataset[k * 4 + 0];
-      y2 = dataset[k * 4 + 1];
-      z2 = dataset[k * 4 + 2];
-      q2 = dataset[k * 4 + 3];
-      float mag = (x2 * x2) + (y2 * y2) + (z2 * z2) + (q2 * q2);
+      x2 = dataset[k * point_dim + 0];
+      y2 = dataset[k * point_dim + 1];
+      z2 = dataset[k * point_dim + 2];
+      if (point_dim == 4) {
+        q2 = dataset[k * point_dim + 3];
+      }
+      float mag = (x2 * x2) + (y2 * y2) + (z2 * z2);
+      if (point_dim == 4) {
+        mag += q2 q2;
+      }
       if (mag <= 1e-3) continue;
 
       float d =
-          (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1) + (q2 - q1) * (q2 - q1);
+          (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1);
+
+      if (point_dim == 4) {
+        d += (q2 - q1) * (q2 - q1);
+      }
 
       float d2 = min(d, temp[k]);
       temp[k] = d2;
@@ -174,7 +186,7 @@ __global__ void furthest_point_sampling_kernel(
   }
 }
 
-void furthest_point_sampling_kernel_wrapper(int b, int n, int m,
+void furthest_point_sampling_kernel_wrapper(int b, int n, int m, int point_dim,
                                             const float *dataset, float *temp,
                                             int *idxs) {
   unsigned int n_threads = opt_n_threads(n);
@@ -184,47 +196,47 @@ void furthest_point_sampling_kernel_wrapper(int b, int n, int m,
   switch (n_threads) {
     case 512:
       furthest_point_sampling_kernel<512>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 256:
       furthest_point_sampling_kernel<256>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 128:
       furthest_point_sampling_kernel<128>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 64:
       furthest_point_sampling_kernel<64>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 32:
       furthest_point_sampling_kernel<32>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 16:
       furthest_point_sampling_kernel<16>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 8:
       furthest_point_sampling_kernel<8>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 4:
       furthest_point_sampling_kernel<4>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 2:
       furthest_point_sampling_kernel<2>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     case 1:
       furthest_point_sampling_kernel<1>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
       break;
     default:
       furthest_point_sampling_kernel<512>
-          <<<b, n_threads, 0, stream>>>(b, n, m, dataset, temp, idxs);
+          <<<b, n_threads, 0, stream>>>(b, n, m, point_dim, dataset, temp, idxs);
   }
 
   CUDA_CHECK_ERRORS();
