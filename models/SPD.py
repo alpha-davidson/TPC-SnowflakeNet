@@ -8,7 +8,7 @@ from models.skip_transformer import SkipTransformer
 
 
 class SPD(nn.Module):
-    def __init__(self, dim_feat=512, up_factor=2, i=0, radius=1, bounding=True, global_feat=True):
+    def __init__(self, dim_feat=512, up_factor=2, i=0, radius=1, bounding=True, global_feat=True, point_dim=4):
         """Snowflake Point Deconvolution"""
         super(SPD, self).__init__()
         self.i = i
@@ -20,10 +20,10 @@ class SPD(nn.Module):
         self.global_feat = global_feat
         self.ps_dim = 32 if global_feat else 64
 
-        self.mlp_1 = MLP_CONV(in_channel=4, layer_dims=[64, 128])
+        self.mlp_1 = MLP_CONV(in_channel=point_dim, layer_dims=[64, 128])
         self.mlp_2 = MLP_CONV(in_channel=128 * 2 + dim_feat if self.global_feat else 128, layer_dims=[256, 128])
 
-        self.skip_transformer = SkipTransformer(in_channel=128, dim=64)
+        self.skip_transformer = SkipTransformer(in_channel=128, dim=64, point_dim=point_dim)
 
         self.mlp_ps = MLP_CONV(in_channel=128, layer_dims=[64, self.ps_dim])
         self.ps = nn.ConvTranspose1d(self.ps_dim, 128, up_factor, up_factor, bias=False)   # point-wise splitting
@@ -31,7 +31,7 @@ class SPD(nn.Module):
         self.up_sampler = nn.Upsample(scale_factor=up_factor)
         self.mlp_delta_feature = MLP_Res(in_dim=256, hidden_dim=128, out_dim=128)
 
-        self.mlp_delta = MLP_CONV(in_channel=128, layer_dims=[64, 4])
+        self.mlp_delta = MLP_CONV(in_channel=128, layer_dims=[64, point_dim])
 
     def forward(self, pcd_prev, feat_global=None, K_prev=None):
         """
