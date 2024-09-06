@@ -59,7 +59,7 @@ at::Tensor three_interpolate(at::Tensor points, at::Tensor idx,
 
   if (points.is_cuda()) {
     three_interpolate_kernel_wrapper(
-        points.size(0), points.size(1), points.size(2), idx.size(1), unknowns.size(2),
+        points.size(0), points.size(1), points.size(2), idx.size(1), weight.size(2),
         points.data_ptr<float>(), idx.data_ptr<int>(), weight.data_ptr<float>(),
         output.data_ptr<float>());
   } else {
@@ -88,7 +88,7 @@ at::Tensor three_interpolate_grad(at::Tensor grad_out, at::Tensor idx,
 
   if (grad_out.is_cuda()) {
     three_interpolate_grad_kernel_wrapper(
-        grad_out.size(0), grad_out.size(1), grad_out.size(2), m, unknowns.size(2),
+        grad_out.size(0), grad_out.size(1), grad_out.size(2), m, weight.size(2),
         grad_out.data_ptr<float>(), idx.data_ptr<int>(),
         weight.data_ptr<float>(), output.data_ptr<float>());
   } else {

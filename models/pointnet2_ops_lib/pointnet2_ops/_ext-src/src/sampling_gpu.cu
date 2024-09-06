@@ -106,7 +106,7 @@ __global__ void furthest_point_sampling_kernel(
       }
       float mag = (x2 * x2) + (y2 * y2) + (z2 * z2);
       if (point_dim == 4) {
-        mag += q2 q2;
+        mag += q2 * q2;
       }
       if (mag <= 1e-3) continue;
 
