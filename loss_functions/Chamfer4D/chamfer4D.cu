@@ -170,19 +170,19 @@ __global__ void NmDistanceGradKernel(int b, int n, const float * xyz1, int m, co
 			float z1 = xyz1[(i*n + j)*4 + 2];
 			float q1 = xyz1[(i*n + j)*4 + 3];
 			int j2 = idx1[i*n + j];
-			float x2 = xyz2[(i*m + j2)*3 + 0];
-			float y2 = xyz2[(i*m + j2)*3 + 1];
-			float z2 = xyz2[(i*m + j2)*3 + 2];
-			float q2 = xyz2[(i*m + j2)*3 + 3];
+			float x2 = xyz2[(i*m + j2)*4 + 0];
+			float y2 = xyz2[(i*m + j2)*4 + 1];
+			float z2 = xyz2[(i*m + j2)*4 + 2];
+			float q2 = xyz2[(i*m + j2)*4 + 3];
 			float g = grad_dist1[i*n + j]*2;
-			atomicAdd(&(grad_xyz1[(i*n + j)*3 + 0]), g*(x1 - x2));
-			atomicAdd(&(grad_xyz1[(i*n + j)*3 + 1]), g*(y1 - y2));
-			atomicAdd(&(grad_xyz1[(i*n + j)*3 + 2]), g*(z1 - z2));
-			atomicAdd(&(grad_xyz1[(i*n + j)*3 + 3]), g*(q1 - q2));
-			atomicAdd(&(grad_xyz2[(i*m + j2)*3 + 0]), -(g*(x1 - x2)));
-			atomicAdd(&(grad_xyz2[(i*m + j2)*3 + 1]), -(g*(y1 - y2)));
-			atomicAdd(&(grad_xyz2[(i*m + j2)*3 + 2]), -(g*(z1 - z2)));
-			atomicAdd(&(grad_xyz2[(i*m + j2)*3 + 3]), -(g*(q1 - q2)));
+			atomicAdd(&(grad_xyz1[(i*n + j)*4 + 0]), g*(x1 - x2));
+			atomicAdd(&(grad_xyz1[(i*n + j)*4 + 1]), g*(y1 - y2));
+			atomicAdd(&(grad_xyz1[(i*n + j)*4 + 2]), g*(z1 - z2));
+			atomicAdd(&(grad_xyz1[(i*n + j)*4 + 3]), g*(q1 - q2));
+			atomicAdd(&(grad_xyz2[(i*m + j2)*4 + 0]), -(g*(x1 - x2)));
+			atomicAdd(&(grad_xyz2[(i*m + j2)*4 + 1]), -(g*(y1 - y2)));
+			atomicAdd(&(grad_xyz2[(i*m + j2)*4 + 2]), -(g*(z1 - z2)));
+			atomicAdd(&(grad_xyz2[(i*m + j2)*4 + 3]), -(g*(q1 - q2)));
 		}
 	}
 }
