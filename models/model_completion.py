@@ -121,7 +121,8 @@ class SnowflakeNet(nn.Module):
         radius = kwargs.get('radius', 1)
         bounding = kwargs.get('bounding', True)
         up_factors = kwargs.get('up_factors', None)
-        point_dim = kwargs.get('point_dim', 4)
+        include_q = kwargs.get('include_q', True)
+        point_dim = 4 if include_q else 3
 
         super(SnowflakeNet, self).__init__()
         self.feat_extractor = FeatureExtractor(out_dim=dim_feat, point_dim=point_dim)

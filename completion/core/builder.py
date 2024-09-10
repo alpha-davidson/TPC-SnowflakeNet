@@ -52,6 +52,7 @@ def make_model(config):
         radius=config.model.radius,
         bounding=config.model.bounding,
         up_factors=config.model.up_factors,
+        include_q=config.include_q
     )
 
     # if torch.cuda.is_available():
