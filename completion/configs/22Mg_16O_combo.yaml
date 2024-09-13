@@ -1,21 +1,22 @@
 dataset :
-  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_train_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_train_labels.npy
+  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/center_cut_train_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/center_cut_train_labels.npy
           }
-  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_val_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_val_labels.npy
+  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/center_cut_val_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/center_cut_val_labels.npy
           }
-  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/moving_center_cut_test_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/moving_center_cut_test_labels.npy
+  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/center_cut_test_feats.npy,
+            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/center_cut_test_labels.npy
           }
 
 
 optimizer : {
   type: Adam,
   kwargs: {
-  lr : 0.001, 
-  weight_decay : 0
-}}
+  # lr : 0.001, 
+  # weight_decay : 0
+  }
+}
 
 
 scheduler: {
