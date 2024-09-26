@@ -12,6 +12,7 @@ def get_args_from_command_line():
     parser.add_argument('--n_imgs', type=str, default="10", help='Number of images to save: default is 10, if \"all\" is passed all images will be saved')
     parser.add_argument('--save_img_path', type=str, default="", help='Where to save images')
     parser.add_argument('--experimental', action="store_true", default=False, help='No ground truth provided')
+    parser.add_argument('--point_diff', action="store_true", default=False, help="Show which points were added")
     parser.add_argument('--debug', action="store_true", default=False, help='Save all model outputs in seperate images')
     args = parser.parse_args()
     return args

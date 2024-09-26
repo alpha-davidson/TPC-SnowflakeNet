@@ -331,7 +331,7 @@ def experimental_pad_plane_w_threeD(input_pc, output_pc, idx, path, config):
 
     if path == '':
         path = '/'.join(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
-    plt.savefig(path+"event"+str(idx).zfill(4)+"_exp_pp_3d.png")
+    plt.savefig(path+"event"+str(idx).zfill(5)+"_exp_pp_3d.png")
     plt.close()
 
 
@@ -348,3 +348,58 @@ def debug_img(clouds, idx, path, config):
             path = '/'.joing(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
         plt.savefig(path+"event"+str(idx).zfill(4)+"_"+str(i)+"debug_img.png")
         plt.close()
+
+
+def show_new_points(input_pc, output_pc, idx, path, config):
+
+    R = 250.0
+    thetas = np.linspace(0, 2*np.pi, 1000)
+    xs = R * np.cos(thetas)
+    ys = R * np.sin(thetas)
+    txs = xs[ys >= 0]
+    tys = ys[ys >= 0]
+    bxs = xs[ys < 0]
+    bys = ys[ys < 0]
+
+    ixs, iys, izs, _ = rescale_feats(input_pc[:, 0], input_pc[:, 1], input_pc[:, 2], input_pc[:, 3], config)
+    oxs, oys, ozs, _ = rescale_feats(output_pc[:, 0], output_pc[:, 1], output_pc[:, 2], output_pc[:, 3], config)
+
+    fig = plt.figure(figsize=(10, 10))
+    fig.suptitle("Added Points in Event", str(idx).zfill(5))
+    gs = GridSpec(1, 2, fig)
+
+    threeD = plt.subplot(gs[0, 0], projection='3d')
+
+    threeD.scatter(oxs, ozs, oys, c='red')
+    threeD.scatter(ixs, izs, iys, c='blue')
+
+    threeD.set_title("3D View")
+
+    threeD.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+    threeD.set_ylim((config.RANGES.MIN_Z, config.RANGES.MAX_Z))
+    threeD.set_zlim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+    threeD.set_xlabel("X (mm)")
+    threeD.set_ylabel("Z (mm)")
+    threeD.set_zlabel("Y (mm)")
+
+    twoD = plt.subplot(gs[0, 1])
+
+    twoD.scatter(oxs, oys, c='red')
+    twoD.scatter(ixs, iys, c='blue')
+
+    twoD.set_xlim((config.RANGES.MIN_X, config.RANGES.MAX_X))
+    twoD.set_xlabel("X (mm)")
+    twoD.set_ylim((config.RANGES.MIN_Y, config.RANGES.MAX_Y))
+    twoD.set_ylabel("Y (mm)")
+    twoD.plot(txs, tys, color='grey')
+    twoD.plot(bxs, bys, color='grey')
+    twoD.fill_between(txs, tys, config.RANGES.MAX_Y, color='grey')
+    twoD.fill_between(bxs, bys, config.RANGES.MIN_Y, color='grey')
+    twoD.fill_between(np.linspace(-270, -250, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+    twoD.fill_between(np.linspace(250, 270, 40), config.RANGES.MAX_Y, config.RANGES.MIN_Y, color='grey')
+    twoD.grid(True)
+
+    if path == '':
+        path = '/'.join(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'
+    plt.savefig(path+"event"+str(idx).zfill(5)+"_point_diff.png")
+    plt.close()
