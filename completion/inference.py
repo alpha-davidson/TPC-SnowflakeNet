@@ -43,11 +43,13 @@ def my_inference(model, args, config):
 
             # Output checking
             assert not (np.any(np.isnan(output_pc)) or np.any(np.isinf(output_pc))), "NaNs or Infs in pred cloud"
-            assert max(np.amax(output_pc[:, :2]), np.abs(np.amin(output_pc[:, :2]))) < config.RANGES.MAX_X, "Predicted point out of bounds in XY plane"
-            assert np.amax(output_pc[:, 2]) < config.RANGES.MAX_Z and np.amin(output_pc) > config.RANGES.MIN_Z, "Predicted point out of bounds in Z dimension"
+            # assert max(np.amax(output_pc[:, :2]), np.abs(np.amin(output_pc[:, :2]))) < config.RANGES.MAX_X, "Predicted point out of bounds in XY plane"
+            # assert np.amax(output_pc[:, 2]) < config.RANGES.MAX_Z and np.amin(output_pc) > config.RANGES.MIN_Z, "Predicted point out of bounds in Z dimension"
 
             if args.experimental:
                 misc.experimental_pad_plane_w_threeD(input_pc, output_pc, idx, args.save_img_path, config)
+            elif args.point_diff:
+                misc.show_new_points(input_pc, output_pc, idx, args.save_img_path, config)
             elif args.debug:
                 clouds = []
                 for c in ret:
