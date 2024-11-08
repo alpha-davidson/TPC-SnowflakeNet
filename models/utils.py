@@ -134,7 +134,7 @@ def sample_and_group(xyz, points, npoint, nsample, radius, use_xyz=True):
     return new_xyz, new_points, idx, grouped_xyz
 
 
-def sample_and_group_all(xyz, points, use_xyz=True):
+def sample_and_group_all(xyz, points, use_xyz=True, point_dim=4):
     """
     Args:
         xyz: Tensor, (B, 3, nsample)
@@ -149,8 +149,8 @@ def sample_and_group_all(xyz, points, use_xyz=True):
     """
     b, _, nsample = xyz.shape
     device = xyz.device
-    new_xyz = torch.zeros((1, 3, 1), dtype=torch.float, device=device).repeat(b, 1, 1)
-    grouped_xyz = xyz.reshape((b, 3, 1, nsample))
+    new_xyz = torch.zeros((1, point_dim, 1), dtype=torch.float, device=device).repeat(b, 1, 1)
+    grouped_xyz = xyz.reshape((b, point_dim, 1, nsample))
     idx = torch.arange(nsample, device=device).reshape(1, 1, nsample).repeat(b, 1, 1)
     if points is not None:
         if use_xyz:
@@ -165,7 +165,7 @@ def sample_and_group_all(xyz, points, use_xyz=True):
 
 
 class PointNet_SA_Module(nn.Module):
-    def __init__(self, npoint, nsample, radius, in_channel, mlp, if_bn=True, group_all=False, use_xyz=True):
+    def __init__(self, npoint, nsample, radius, in_channel, mlp, if_bn=True, group_all=False, use_xyz=True, point_dim=4):
         """
         Args:
             npoint: int, number of points to sample
@@ -181,8 +181,9 @@ class PointNet_SA_Module(nn.Module):
         self.mlp = mlp
         self.group_all = group_all
         self.use_xyz = use_xyz
+        self.point_dim = point_dim
         if use_xyz:
-            in_channel += 3
+            in_channel += self.point_dim
 
         last_channel = in_channel
         self.mlp_conv = []
@@ -203,7 +204,7 @@ class PointNet_SA_Module(nn.Module):
             new_points: Tensor, (B, mlp[-1], npoint)
         """
         if self.group_all:
-            new_xyz, new_points, idx, grouped_xyz = sample_and_group_all(xyz, points, self.use_xyz)
+            new_xyz, new_points, idx, grouped_xyz = sample_and_group_all(xyz, points, self.use_xyz, point_dim=self.point_dim)
         else:
             new_xyz, new_points, idx, grouped_xyz = sample_and_group(xyz, points, self.npoint, self.nsample, self.radius, self.use_xyz)
 
@@ -332,7 +333,7 @@ def sample_and_group_knn(xyz, points, npoint, k, use_xyz=True, idx=None):
 
 
 class PointNet_SA_Module_KNN(nn.Module):
-    def __init__(self, npoint, nsample, in_channel, mlp, if_bn=True, group_all=False, use_xyz=True, if_idx=False):
+    def __init__(self, npoint, nsample, in_channel, mlp, if_bn=True, group_all=False, use_xyz=True, if_idx=False, point_dim=4):
         """
         Args:
             npoint: int, number of points to sample
@@ -348,8 +349,9 @@ class PointNet_SA_Module_KNN(nn.Module):
         self.group_all = group_all
         self.use_xyz = use_xyz
         self.if_idx = if_idx
+        self.point_dim = point_dim
         if use_xyz:
-            in_channel += 3
+            in_channel += self.point_dim
 
         last_channel = in_channel
         self.mlp_conv = []
@@ -370,7 +372,7 @@ class PointNet_SA_Module_KNN(nn.Module):
             new_points: Tensor, (B, mlp[-1], npoint)
         """
         if self.group_all:
-            new_xyz, new_points, idx, grouped_xyz = sample_and_group_all(xyz, points, self.use_xyz)
+            new_xyz, new_points, idx, grouped_xyz = sample_and_group_all(xyz, points, self.use_xyz, point_dim=self.point_dim)
         else:
             new_xyz, new_points, idx, grouped_xyz = sample_and_group_knn(xyz, points, self.npoint, self.nsample, self.use_xyz, idx=idx)
 
@@ -397,7 +399,7 @@ def fps_subsample(pcd, n_points=2048):
 
 
 class Transformer(nn.Module):
-    def __init__(self, in_channel, dim=256, n_knn=16, pos_hidden_dim=64, attn_hidden_multiplier=4):
+    def __init__(self, in_channel, dim=256, n_knn=16, pos_hidden_dim=64, attn_hidden_multiplier=4, point_dim=4):
         super(Transformer, self).__init__()
         self.n_knn = n_knn
         self.conv_key = nn.Conv1d(dim, dim, 1)
@@ -405,7 +407,7 @@ class Transformer(nn.Module):
         self.conv_value = nn.Conv1d(dim, dim, 1)
 
         self.pos_mlp = nn.Sequential(
-            nn.Conv2d(3, pos_hidden_dim, 1),
+            nn.Conv2d(point_dim, pos_hidden_dim, 1),
             nn.BatchNorm2d(pos_hidden_dim),
             nn.ReLU(),
             nn.Conv2d(pos_hidden_dim, dim, 1)

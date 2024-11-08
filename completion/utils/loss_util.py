@@ -3,13 +3,13 @@ import torch
 sys.path.append('..')
 
 # from loss_functions import chamfer_l1, chamfer_l2, chamfer_partial_l1, chamfer_partial_l2, emd_loss
-from loss_functions import chamfer_3DDist, emdModule
+from loss_functions import chamfer_4DDist, emdModule
 from models.utils import fps_subsample
 
 class Completionloss:
     def __init__(self, loss_func='cd_l1'):
         self.loss_func = loss_func
-        self.chamfer_dist = chamfer_3DDist()
+        self.chamfer_dist = chamfer_4DDist()
         self.EMD = torch.nn.DataParallel(emdModule().cuda()).cuda()
 
         if loss_func == 'cd_l1':
@@ -107,12 +107,16 @@ class Completionloss:
 
 
 if __name__ == '__main__':
-    gt = torch.randn(10, 2048, 3).cuda()
-    pc = torch.randn(10, 256, 3).cuda()
-    p1 = torch.randn(10, 512, 3).cuda()
-    p2 = torch.randn(10, 1024, 3).cuda()
-    p3 = torch.randn(10, 2048, 3).cuda()
-
-
-    # loss = get_loss([pc, p1, p2, p3], gt, gt, 'emd')[0]
-    # print(loss.item())
+    import numpy as np
+    feats = np.load("/home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/center_cut_train_feats.npy")
+    labels = np.load("/home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/center_cut_train_labels.npy")
+    dummy = np.zeros((2, 128, 4))
+    pred = np.concatenate((feats[:2], dummy), axis=1)
+    pred = torch.Tensor(pred).cuda()
+    gt = labels[:2]
+    gt = torch.Tensor(gt).cuda()
+    partial = feats[:2]
+    partial = torch.Tensor(partial).cuda()
+    loss = Completionloss(loss_func='cd_l1')
+    losses = loss.get_loss([pred, pred, pred, pred], gt, gt)
+    print(losses)

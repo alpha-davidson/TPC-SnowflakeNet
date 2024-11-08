@@ -110,7 +110,7 @@ class PointnetSAModuleMSG(_PointnetSAModuleBase):
             )
             mlp_spec = mlps[i]
             if use_xyz:
-                mlp_spec[0] += 3
+                mlp_spec[0] += 4
 
             self.mlps.append(build_shared_mlp(mlp_spec, bn))
 

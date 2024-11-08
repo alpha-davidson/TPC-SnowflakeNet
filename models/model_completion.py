@@ -8,15 +8,15 @@ from .SPD import SPD
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, out_dim=1024):
+    def __init__(self, out_dim=1024, point_dim=4):
         """Encoder that encodes information of partial point cloud
         """
         super(FeatureExtractor, self).__init__()
-        self.sa_module_1 = PointNet_SA_Module_KNN(512, 16, 3, [64, 128], group_all=False, if_bn=False, if_idx=True)
-        self.transformer_1 = Transformer(128, dim=64)
-        self.sa_module_2 = PointNet_SA_Module_KNN(128, 16, 128, [128, 256], group_all=False, if_bn=False, if_idx=True)
-        self.transformer_2 = Transformer(256, dim=64)
-        self.sa_module_3 = PointNet_SA_Module_KNN(None, None, 256, [512, out_dim], group_all=True, if_bn=False)
+        self.sa_module_1 = PointNet_SA_Module_KNN(512, 16, point_dim, [64, 128], group_all=False, if_bn=False, if_idx=True, point_dim=point_dim)
+        self.transformer_1 = Transformer(128, dim=64, point_dim=point_dim)
+        self.sa_module_2 = PointNet_SA_Module_KNN(128, 16, 128, [128, 256], group_all=False, if_bn=False, if_idx=True, point_dim=point_dim)
+        self.transformer_2 = Transformer(256, dim=64, point_dim=point_dim)
+        self.sa_module_3 = PointNet_SA_Module_KNN(None, None, 256, [512, out_dim], group_all=True, if_bn=False, point_dim=point_dim)
 
     def forward(self, point_cloud):
         """
@@ -39,7 +39,7 @@ class FeatureExtractor(nn.Module):
 
 
 class SeedGenerator(nn.Module):
-    def __init__(self, dim_feat=512, num_pc=256):
+    def __init__(self, dim_feat=512, num_pc=256, point_dim=4):
         super(SeedGenerator, self).__init__()
         self.ps = nn.ConvTranspose1d(dim_feat, 128, num_pc, bias=True)
         self.mlp_1 = MLP_Res(in_dim=dim_feat + 128, hidden_dim=128, out_dim=128)
@@ -48,7 +48,7 @@ class SeedGenerator(nn.Module):
         self.mlp_4 = nn.Sequential(
             nn.Conv1d(128, 64, 1),
             nn.ReLU(),
-            nn.Conv1d(64, 3, 1)
+            nn.Conv1d(64, point_dim, 1)
         )
 
     def forward(self, feat):
@@ -66,10 +66,10 @@ class SeedGenerator(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self, dim_feat=512, num_pc=256, num_p0=512,
-                 radius=1, bounding=True, up_factors=None):
+                 radius=1, bounding=True, up_factors=None, point_dim=4):
         super(Decoder, self).__init__()
         self.num_p0 = num_p0
-        self.decoder_coarse = SeedGenerator(dim_feat=dim_feat, num_pc=num_pc)
+        self.decoder_coarse = SeedGenerator(dim_feat=dim_feat, num_pc=num_pc, point_dim=point_dim)
         if up_factors is None:
             up_factors = [1]
         else:
@@ -77,7 +77,7 @@ class Decoder(nn.Module):
 
         uppers = []
         for i, factor in enumerate(up_factors):
-            uppers.append(SPD(dim_feat=dim_feat, up_factor=factor, i=i, bounding=bounding, radius=radius))
+            uppers.append(SPD(dim_feat=dim_feat, up_factor=factor, i=i, bounding=bounding, radius=radius, point_dim=point_dim))
 
         self.uppers = nn.ModuleList(uppers)
 
@@ -121,11 +121,14 @@ class SnowflakeNet(nn.Module):
         radius = kwargs.get('radius', 1)
         bounding = kwargs.get('bounding', True)
         up_factors = kwargs.get('up_factors', None)
+        include_q = kwargs.get('include_q', True)
+        point_dim = 4 if include_q else 3
 
         super(SnowflakeNet, self).__init__()
-        self.feat_extractor = FeatureExtractor(out_dim=dim_feat)
+        self.feat_extractor = FeatureExtractor(out_dim=dim_feat, point_dim=point_dim)
         self.decoder = Decoder(dim_feat=dim_feat, num_pc=num_pc, num_p0=num_p0,
-                               radius=radius, bounding=bounding, up_factors=up_factors)
+                               radius=radius, bounding=bounding, up_factors=up_factors,
+                               point_dim=point_dim)
 
     def forward(self, point_cloud, return_P0=False):
         """

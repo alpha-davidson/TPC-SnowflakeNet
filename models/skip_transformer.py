@@ -7,7 +7,7 @@ from .utils import MLP_Res, grouping_operation, query_knn
 
 
 class SkipTransformer(nn.Module):
-    def __init__(self, in_channel, dim=256, n_knn=16, pos_hidden_dim=64, attn_hidden_multiplier=4):
+    def __init__(self, in_channel, dim=256, n_knn=16, pos_hidden_dim=64, attn_hidden_multiplier=4, point_dim=4):
         super(SkipTransformer, self).__init__()
         self.mlp_v = MLP_Res(in_dim=in_channel*2, hidden_dim=in_channel, out_dim=in_channel)
         self.n_knn = n_knn
@@ -16,7 +16,7 @@ class SkipTransformer(nn.Module):
         self.conv_value = nn.Conv1d(in_channel, dim, 1)
 
         self.pos_mlp = nn.Sequential(
-            nn.Conv2d(3, pos_hidden_dim, 1),
+            nn.Conv2d(point_dim, pos_hidden_dim, 1),
             nn.BatchNorm2d(pos_hidden_dim),
             nn.ReLU(),
             nn.Conv2d(pos_hidden_dim, dim, 1)

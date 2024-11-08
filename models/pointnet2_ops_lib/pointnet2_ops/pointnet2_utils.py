@@ -294,7 +294,7 @@ class QueryAndGroup(nn.Module):
         self.radius, self.nsample, self.use_xyz = radius, nsample, use_xyz
 
     def forward(self, xyz, new_xyz, features=None):
-        # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[Torch.Tensor]
+        # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[torch.Tensor]
         r"""
         Parameters
         ----------
