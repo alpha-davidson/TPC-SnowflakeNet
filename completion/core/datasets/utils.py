@@ -385,3 +385,50 @@ class IO:
     def _write_h5(cls, file_path, file_content):
         with h5py.File(file_path, 'w') as f:
             f.create_dataset('data', data=file_content)
+
+
+class MinMaxDownScale:
+    def __init__(self, parameters):
+        config = parameters['config']
+        self.min_x = config.RANGES.MIN_X
+        self.min_y = config.RANGES.MIN_Y
+        self.min_z = config.RANGES.MIN_Z
+        self.min_logA = config.RANGES.MIN_Q
+
+        self.max_x = config.RANGES.MAX_X
+        self.max_y = config.RANGES.MAX_Y
+        self.max_z = config.RANGES.MAX_Z
+        self.max_logA = config.RANGES.MAX_Q
+
+    def __call__(self, event):
+        dxs = (event[:, 0] - self.max_x) / (self.max_x - self.min_x)
+        dys = (event[:, 0] - self.max_y) / (self.max_y - self.min_y)
+        dzs = (event[:, 0] - self.max_z) / (self.max_z - self.min_z)
+        dqs = (event[:, 0] - self.max_logA) / (self.max_logA - self.min_logA)
+
+        downscaled = np.stack([dxs, dys, dzs, dqs], axis=-1)
+
+        return downscaled
+    
+
+class MinMaxUpScale:
+    def __init__(self, config):
+        self.min_x = config.RANGES.MIN_X
+        self.min_y = config.RANGES.MIN_Y
+        self.min_z = config.RANGES.MIN_Z
+        self.min_logA = config.RANGES.MIN_Q
+
+        self.max_x = config.RANGES.MAX_X
+        self.max_y = config.RANGES.MAX_Y
+        self.max_z = config.RANGES.MAX_Z
+        self.max_logA = config.RANGES.MAX_Q
+
+    def __call__(self, event):
+        uxs = event[:, 0] * (self.max_x - self.min_x) + self.max_x
+        uys = event[:, 0] * (self.max_y - self.min_y) + self.max_y
+        uzs = event[:, 0] * (self.max_z - self.min_z) + self.max_z
+        uqs = event[:, 0] * (self.max_logA - self.min_logA) + self.max_logA
+
+        upscaled = np.stack([uxs, uys, uzs, uqs], axis=-1)
+
+        return upscaled
