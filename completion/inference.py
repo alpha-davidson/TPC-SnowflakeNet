@@ -2,8 +2,9 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import core.builder as builder
-from utils import misc, yaml_reader
+from utils import misc, yaml_reader, helpers
 import argparse
+import os
 
 def get_args_from_command_line():
     parser = argparse.ArgumentParser(description='The argument parser of SnowflakeNet')
@@ -23,17 +24,23 @@ def my_inference(model, args, config):
     if args.n_imgs != "all":
         n_imgs_flag = int(args.n_imgs)
 
+    if not os.path.exists(args.save_img_path):
+        os.mkdir(args.save_img_path)
+
     with torch.no_grad():
         
-        data_loader = builder.make_dataloader(config, "test")
+        data_loader = builder.get_dataloader(config, "test", args)
 
-        for idx, (feats, labels) in enumerate(data_loader):
+        for idx, (experiment, data) in enumerate(data_loader):
 
             if idx == n_imgs_flag:
                 break
 
-            partial = feats.cuda()
-            gt = labels.cuda()
+            for k, v in data.items():
+                data[k] = helpers.var_or_cuda(v)
+
+            partial = data['partial_cloud']
+            gt = data['gt_cloud']
 
             ret = model(partial, return_P0=True)
 
@@ -56,7 +63,7 @@ def my_inference(model, args, config):
                     clouds.append(c.squeeze().detach().cpu().numpy())
                 misc.debug_img(clouds, idx, args.save_img_path, config)
             else:
-                misc.pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args)
+                misc.pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, experiment[0], config, args)
 
     return
 
