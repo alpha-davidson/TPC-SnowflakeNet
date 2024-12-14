@@ -401,10 +401,11 @@ class MinMaxDownScale:
         self.max_logA = config.RANGES.MAX_Q
 
     def __call__(self, event):
-        dxs = (event[:, 0] - self.max_x) / (self.max_x - self.min_x)
-        dys = (event[:, 0] - self.max_y) / (self.max_y - self.min_y)
-        dzs = (event[:, 0] - self.max_z) / (self.max_z - self.min_z)
-        dqs = (event[:, 0] - self.max_logA) / (self.max_logA - self.min_logA)
+        dxs = (event[:, 0] - self.min_x) / (self.max_x - self.min_x)
+        dys = (event[:, 1] - self.min_y) / (self.max_y - self.min_y)
+        dzs = (event[:, 2] - self.min_z) / (self.max_z - self.min_z)
+        qs = np.log(event[:, 3])
+        dqs = (qs - self.min_logA) / (self.max_logA - self.min_logA)
 
         downscaled = np.stack([dxs, dys, dzs, dqs], axis=-1)
 
@@ -424,10 +425,11 @@ class MinMaxUpScale:
         self.max_logA = config.RANGES.MAX_Q
 
     def __call__(self, event):
-        uxs = event[:, 0] * (self.max_x - self.min_x) + self.max_x
-        uys = event[:, 0] * (self.max_y - self.min_y) + self.max_y
-        uzs = event[:, 0] * (self.max_z - self.min_z) + self.max_z
-        uqs = event[:, 0] * (self.max_logA - self.min_logA) + self.max_logA
+        uxs = event[:, 0] * (self.max_x - self.min_x) + self.min_x
+        uys = event[:, 1] * (self.max_y - self.min_y) + self.min_y
+        uzs = event[:, 2] * (self.max_z - self.min_z) + self.min_z
+        qs = np.exp(event[:, 3])
+        uqs = qs * (self.max_logA - self.min_logA) + self.min_logA
 
         upscaled = np.stack([uxs, uys, uzs, uqs], axis=-1)
 
