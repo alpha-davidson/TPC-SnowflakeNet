@@ -14,7 +14,7 @@ def get_args_from_command_line():
 
 def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=False, test_writer=None, completion_loss=None, args=None):
     if test_dataloader is None:
-        test_dataloader = builder.make_dataloader(config, "test", args)
+        test_dataloader = builder.get_dataloader(config, "test", args)
 
     if model is None:
         model = builder.make_model(config)

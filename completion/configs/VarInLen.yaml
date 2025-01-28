@@ -2,7 +2,7 @@ dataset :
   category_file_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/category_file.json
   partial_cloud_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/%s/partial/%s/%s.npy
   gt_cloud_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/%s/complete/%s.npy
-  n_points : 128
+  n_points : 2048
   train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/Mg_O_combo_train_feats.npy,
             complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/Mg_O_combo_train_labels.npy
           }
@@ -33,10 +33,10 @@ scheduler: {
             
 model : 
   dim_feat: 512 
-  num_pc: 32
-  num_p0: 64 
+  num_pc: 256
+  num_p0: 512
   radius: 1.0
-  up_factors: [1, 2, 4]
+  up_factors: [1, 2, 2]
   bounding : True
 
 

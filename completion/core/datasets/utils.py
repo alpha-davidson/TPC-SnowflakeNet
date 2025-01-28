@@ -428,8 +428,8 @@ class MinMaxUpScale:
         uxs = event[:, 0] * (self.max_x - self.min_x) + self.min_x
         uys = event[:, 1] * (self.max_y - self.min_y) + self.min_y
         uzs = event[:, 2] * (self.max_z - self.min_z) + self.min_z
-        qs = np.exp(event[:, 3])
-        uqs = qs * (self.max_logA - self.min_logA) + self.min_logA
+        uqs = event[:, 3] * (self.max_logA - self.min_logA) + self.min_logA
+        uqs = np.exp(uqs)
 
         upscaled = np.stack([uxs, uys, uzs, uqs], axis=-1)
 
