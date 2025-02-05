@@ -5,6 +5,7 @@ import random
 import torch.nn as nn
 import torch.nn.functional as F
 from models.utils import fps_subsample as fps
+from core.datasets.utils import MinMaxDownScale
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
@@ -200,7 +201,7 @@ def check_grads(module, grad_in, grad_out):
         raise Exception(f"NaN of Inf found in output gradient from module {type(module)}")
     
 
-def pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args):
+def pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, exp, config, args):
 
     R = 250.0
     thetas = np.linspace(0, 2*np.pi, 1000)
@@ -212,7 +213,7 @@ def pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, config, args):
     bys = ys[ys < 0]
 
     fig = plt.figure(figsize=(15, 10))
-    fig.suptitle("Event "+str(idx).zfill(4))
+    fig.suptitle("Event "+str(idx).zfill(4)+" - "+exp)
 
     gs = GridSpec(2, 3)
 
@@ -340,9 +341,9 @@ def debug_img(clouds, idx, path, config):
     for i, c in enumerate(clouds):
         fig, ax = plt.subplots(1, 1, figsize=(12, 6), subplot_kw=dict(projection='3d'))
         ax.scatter(c[:, 0], c[:, 2], c[:, 1], c=c[:, 3], cmap='copper', s=1)
-        ax.set_xlim((0,1))
-        ax.set_ylim((0,1))
-        ax.set_zlim((0,1))
+        # ax.set_xlim((0,1))
+        # ax.set_ylim((0,1))
+        # ax.set_zlim((0,1))
 
         if path == '':
             path = '/'.joing(config.dataset.test.partial.path.split('/')[:-1]) + '/imgs/'

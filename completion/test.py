@@ -2,7 +2,7 @@ import os
 import torch
 import argparse
 import numpy as np
-from utils import average_meter, yaml_reader, loss_util, misc
+from utils import average_meter, yaml_reader, loss_util, helpers
 from core import builder
 
 def get_args_from_command_line():
@@ -14,7 +14,7 @@ def get_args_from_command_line():
 
 def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=False, test_writer=None, completion_loss=None, args=None):
     if test_dataloader is None:
-        test_dataloader = builder.make_dataloader(config, "test", args)
+        test_dataloader = builder.get_dataloader(config, "test", args)
 
     if model is None:
         model = builder.make_model(config)
@@ -32,7 +32,9 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
     model.eval()
 
     n_samples = len(test_dataloader)
-    test_losses = average_meter.AverageMeter(['loss_partial', 'loss_pc', 'loss_p1', 'loss_output', 'loss_total'])
+    test_losses = average_meter.AverageMeter(['loss_partial', 'loss_pc', 'loss_p1', 'loss_p2', 'loss_output', 'loss_total'])
+    test_metrics = average_meter.AverageMeter([config.loss_func])
+    category_metrics = dict()
 
     multiplier = 1.0
     if config.loss_func == 'cd_l1':
@@ -47,10 +49,13 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
         completion_loss = loss_util.Completionloss(loss_func=config.loss_func)
 
     with torch.no_grad():
-        for idx, (feats, labels) in enumerate(test_dataloader):
+        for idx, (experiment, data) in enumerate(test_dataloader):
 
-            partial = feats.cuda()
-            gt = labels.cuda()
+            for k, v in data.items():
+                data[k] = helpers.var_or_cuda(v)
+
+            partial = data['partial_cloud']
+            gt = data['gt_cloud']
             pcds_pred = model(partial)
 
             # for pc_idx, pc in enumerate(pcds_pred):
@@ -64,9 +69,15 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
             loss_c = losses[1].item() * multiplier
             loss_1 = losses[2].item() * multiplier
             loss_2 = losses[3].item() * multiplier
-            # loss_3 = losses[4].item() * multiplier
+            loss_3 = losses[4].item() * multiplier
+            _metrics = [loss_3]
 
-            test_losses.update([partial_matching, loss_c, loss_1, loss_2, loss_total.item() * multiplier])
+            test_losses.update([partial_matching, loss_c, loss_1, loss_2, loss_3, loss_total.item() * multiplier])
+            test_metrics.update(_metrics)
+            if experiment not in category_metrics:
+                category_metrics[experiment] = average_meter.AverageMeter([config.loss_func])
+            category_metrics[experiment].update(_metrics)
+
             if idx % 100 == 0 or not validation:
                 print('Test[%d/%d] Losses = %s' % (idx + 1, n_samples, ['%.4f' % l for l in test_losses.val()]), flush=True)
 
@@ -83,9 +94,9 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
         test_writer.add_scalar('Loss/Epoch/loss_partial', test_losses.avg(0), epoch_idx)
         test_writer.add_scalar('Loss/Epoch/loss_pc', test_losses.avg(1), epoch_idx)
         test_writer.add_scalar('Loss/Epoch/loss_1', test_losses.avg(2), epoch_idx)
-        # test_writer.add_scalar('Loss/Epoch/loss_2', test_losses.avg(3), epoch_idx)
-        test_writer.add_scalar('Loss/Epoch/loss_output', test_losses.avg(3), epoch_idx)
-        test_writer.add_scalar('Loss/Epoch/loss_total', test_losses.avg(4), epoch_idx)
+        test_writer.add_scalar('Loss/Epoch/loss_2', test_losses.avg(3), epoch_idx)
+        test_writer.add_scalar('Loss/Epoch/loss_output', test_losses.avg(4), epoch_idx)
+        test_writer.add_scalar('Loss/Epoch/loss_total', test_losses.avg(5), epoch_idx)
 
     return test_losses.avg(3), test_losses.avg(4)
 
