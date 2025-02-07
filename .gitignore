@@ -1,10 +1,10 @@
-scripts/
-data/
 completion/exp/
 completion/core/datasets/__pycache__
 completion/__pycache__/
 completion/core/__pycache__/
 completion/utils/__pycache__/
+data/
+imgs/
 loss_functions/__pycache__/
 loss_functions/Chamfer3D/build/
 loss_functions/Chamfer3D/chamfer_3D.egg-info/
@@ -25,7 +25,7 @@ models/__pycache__/
 models/pointnet2_ops_lib/build/
 models/pointnet2_ops_lib/pointnet2_ops.egg-info/
 models/pointnet2_ops_lib/dist/
-imgs/
+scripts/
 *.npy
 testing.ipynb
 transformer_list.txt
