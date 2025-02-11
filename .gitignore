@@ -1,6 +1,6 @@
 scripts/
-data/
 completion/exp/
+completion/core/datasets/__pycache__
 loss_functions/__pycache__/
 loss_functions/Chamfer3D/build/
 loss_functions/Chamfer3D/chamfer_3D.egg-info/
