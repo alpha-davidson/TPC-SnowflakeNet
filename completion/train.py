@@ -37,8 +37,8 @@ def train(config, args):
 
 
     # dataloaders
-    train_dataloader = builder.make_dataloader(config, "train", args)
-    val_dataloader = builder.make_dataloader(config, "val", args)
+    train_dataloader = builder.get_dataloader(config, "train", args)
+    val_dataloader = builder.get_dataloader(config, "val", args)
 
     model = builder.make_model(config)
     if torch.cuda.is_available():
@@ -93,7 +93,7 @@ def train(config, args):
 
     n_batches = len(train_dataloader)
     loss_names = ["pc", "p1", "p2", "p3"]
-    avg_meter_loss = average_meter.AverageMeter(['loss_partial', 'loss_pc', 'loss_p1', 'loss_output', 'loss_total'])
+    avg_meter_loss = average_meter.AverageMeter(['loss_partial', 'loss_pc', 'loss_p1', 'loss_p2', 'loss_output', 'loss_total'])
     torch.autograd.set_detect_anomaly(True)
     # for module in model.modules():
     #     if isinstance(module, torch.nn.Sequential):
@@ -104,10 +104,13 @@ def train(config, args):
         avg_meter_loss.reset()
         model.train()
         print(['loss_partial', 'loss_pc', 'loss_p1', 'loss_output', 'loss_total'])
-        for batch_idx, (feats, labels) in enumerate(train_dataloader):
+        for batch_idx, (experiment, data) in enumerate(train_dataloader):
             
-            partial = feats.cuda()
-            gt = labels.cuda()
+            for k, v in data.items():
+                data[k] = helpers.var_or_cuda(v)
+
+            partial = data['partial_cloud']
+            gt = data['gt_cloud']
             pcds_pred = model(partial)
 
             # for pc_idx, pc in enumerate(pcds_pred):
@@ -152,9 +155,9 @@ def train(config, args):
         train_writer.add_scalar('Loss/Epoch/loss_partial', avg_meter_loss.avg(0), epoch_idx)
         train_writer.add_scalar('Loss/Epoch/loss_pc', avg_meter_loss.avg(1), epoch_idx)
         train_writer.add_scalar('Loss/Epoch/loss_1', avg_meter_loss.avg(2), epoch_idx)
-        # train_writer.add_scalar('Loss/Epoch/loss_2', avg_meter_loss.avg(3), epoch_idx)
-        train_writer.add_scalar('Loss/Epoch/loss_output', avg_meter_loss.avg(3), epoch_idx)
-        train_writer.add_scalar('Loss/Epoch/loss_total', avg_meter_loss.avg(4), epoch_idx)
+        train_writer.add_scalar('Loss/Epoch/loss_2', avg_meter_loss.avg(3), epoch_idx)
+        train_writer.add_scalar('Loss/Epoch/loss_output', avg_meter_loss.avg(4), epoch_idx)
+        train_writer.add_scalar('Loss/Epoch/loss_total', avg_meter_loss.avg(5), epoch_idx)
 
         torch.nn.utils.clip_grad_norm_(model.parameters(), getattr(config, 'grad_norm_clip', 10), norm_type=2)
         cd_eval, total_test_loss = test(config, model=model, test_dataloader=val_dataloader, validation=True,

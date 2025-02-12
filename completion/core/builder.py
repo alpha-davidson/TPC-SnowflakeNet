@@ -1,13 +1,29 @@
 import sys
 import numpy as np
 import torch
+import torch.utils
 from torch.utils.data import TensorDataset
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
+import torch.utils.data
+import torch.utils.data.dataloader
 
 sys.path.append('../..')
 from utils.misc import build_lambda_sche, build_lambda_bnsche
 from models.model_completion import SnowflakeNet
 from utils.scheduler import GradualWarmupScheduler
+from .datasets.alpha import ALPhaDataLoader, collate_fn
+
+
+def get_dataloader(config, split, args=None):
+
+    dataset = ALPhaDataLoader(config).get_datset(split)
+
+    return torch.utils.data.DataLoader(dataset=dataset,
+                                       batch_size=1 if split == 'test' else config.batch_size,
+                                       shuffle=False,
+                                    #    collate_fn=collate_fn,
+                                       drop_last=split=='train',
+                                       num_workers=int(config.num_workers))
 
 
 def make_dataloader(config, split, args=None):
