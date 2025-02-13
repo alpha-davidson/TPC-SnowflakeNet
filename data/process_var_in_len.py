@@ -14,9 +14,9 @@ import os
 import h5py
 import random
 import sys
-from sklearn.model_selection import train_test_split
 import cutting_funcitons as cf
 sys.path.append("/data")
+sys.path.append("../")
 
 
 def process_file(file_path, save_path, min_len, max_len):
@@ -84,7 +84,8 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
     mg_hashes = os.listdir(mg_path)
     o_hashes = os.listdir(o_path)
 
-    name_arr = np.ndarray((len(mg_hashes) + len(o_hashes)), dtype=[('hash', 'object'), ('experiment', 'object')])
+    name_arr = np.ndarray((len(mg_hashes) + len(o_hashes)),
+                          dtype=[('hash', 'object'), ('experiment', 'object')])
     i = 0
     for h in mg_hashes:
         name_arr[i] = (h.split('.')[0], '22Mg')
@@ -109,7 +110,7 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
 def make_category_file(train, val, test, path):
     '''
     Creates .json category file for dataset.
-    Needs Tuning -- Fucks up with commas a bit
+    Needs Tuning -- Commas are missing/misplaced
 
     Parameters:
         train: np.ndarray - hahses that are part of the train set 
@@ -197,16 +198,122 @@ def make_category_file(train, val, test, path):
         return
     
 
+def sort_files(mg_path, o_path, train, val, test):
+    '''
+    Reorganizes files based on their dataset
 
+    Parameters:
+        mg_path: str - 
+        o_path: str - 
+        train: np.ndarray - 
+        val: np.ndarray - 
+        test: np.ndarray - 
+
+    Returns:
+        None
+    '''
+
+    for file in os.listdir(mg_path):
+
+        hsh = file.split(".")[0]
+
+        if hsh in train['hash']:
+            os.rename(mg_path+file, mg_path+'train/complete/'+file)
+        elif hsh in val['hash']:
+            os.rename(mg_path+file, mg_path+'val/complete/'+file)
+        elif hsh in test['hash']:
+            os.rename(mg_path+file, mg_path+'test/complete/'+file)
+        else:
+            raise NameError()
+
+    for file in os.listdir(o_path):
+    
+        hsh = file.split(".")[0]
+        if hsh in train['hash']:
+            os.rename(o_path+file, o_path+'train/complete/'+file)
+        elif hsh in val['hash']:
+            os.rename(o_path+file, o_path+'val/complete/'+file)
+        elif hsh in test['hash']:
+            os.rename(o_path+file, o_path+'test/complete/'+file)
+        else:
+            raise NameError()
+
+    return
+
+
+def create_partial_clouds(mg_path, o_path, percentage_cut=0.25):
+    '''
+    Cuts complete cloud into 3 partial clouds: center, random, and downsampled
+
+    Parameters:
+        mg_path: str - 
+        o_path: str - 
+        percentage_cut: float - 
+
+    Returns:
+        None
+    '''
+
+    rng = np.random.default_rng()
+
+    for split in ('/train', '/val', '/test'):
+        for file in os.listdir(mg_path+split+'/complete'):
+            event = np.load(file)
+            k = len(event) * percentage_cut
+
+            center = cf.center_cut(event, k)
+            rand = cf.rand_cut(event, rng)
+            down = cf.down_sample(event, k)
+
+            hsh = file.split('.')[0]
+            if not os.path.exists(mg_path+split+f'/partial/{hsh}'):
+                os.mkdir(mg_path+split+f'/partial/{hsh}')
+
+            np.save(mg_path+split+f'/partial/{hsh}/center.npy', center)
+            np.save(mg_path+split+f'/partial/{hsh}/rand.npy', rand)
+            np.save(mg_path+split+f'/partial/{hsh}/down.npy', down)
+
+    for split in ('/train', '/val', '/test'):
+        for file in os.listdir(o_path+split+'/complete'):
+            event = np.load(file)
+            k = len(event) * percentage_cut
+
+            center = cf.center_cut(event, k)
+            rand = cf.rand_cut(event, rng)
+            down = cf.down_sample(event, k)
+
+            hsh = file.split('.')[0]
+            if not os.path.exists(o_path+split+f'/partial/{hsh}'):
+                os.mkdir(o_path+split+f'/partial/{hsh}')
+
+            np.save(o_path+split+f'/partial/{hsh}/center.npy', center)
+            np.save(o_path+split+f'/partial/{hsh}/rand.npy', rand)
+            np.save(o_path+split+f'/partial/{hsh}/down.npy', down)
+
+    return
 
 
 if __name__ == '__main__':
 
-    MG_FILE_PATH = '/data'
-    O_FILE_PATH = '/data'
+    MG_FILE_PATH = '/data/'
+    O_FILE_PATH = '/data/'
 
     MG_SAVE_PATH = ''
     O_SAVE_PATH = ''
 
     MIN_N_POINTS = 0
     MAX_N_POINTS = 0
+
+    CATEGORY_FILE_PATH = '../completion/category_files/'
+
+    # Process
+    process_file(MG_FILE_PATH, MG_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
+    process_file(O_FILE_PATH, O_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
+
+    # Split and sort
+    train, val, test = get_ttv_split(MG_SAVE_PATH, O_SAVE_PATH)
+    make_category_file(train, val, test, CATEGORY_FILE_PATH)
+    sort_files(MG_SAVE_PATH, O_SAVE_PATH, train, val, test)
+
+    # Cut
+    create_partial_clouds(MG_SAVE_PATH, O_SAVE_PATH)
