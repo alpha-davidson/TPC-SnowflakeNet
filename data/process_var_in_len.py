@@ -1,3 +1,13 @@
+"""
+Processes and cuts .h5 files of simulated AT-TPC data
+into one numpy array per event for track completion
+
+Author: Ben Wagner
+Date Created: 2/12/25
+
+"""
+
+
 import numpy as np
 import json
 import os
@@ -6,9 +16,24 @@ import random
 import sys
 from sklearn.model_selection import train_test_split
 import cutting_funcitons as cf
+sys.path.append("/data")
 
 
-def get_file_and_lengths(file_path):
+def process_file(file_path, save_path, min_len, max_len):
+    '''
+    Turns .h5 file into individual numpy arrays for each event. 
+    Hard coded for 4 dimensional output point cloud and 
+    input point cloud to be [x, y, z, t, q_a, ...]
+
+    Parameters:
+        file_path: str - Path to .h5 file
+        save_path: str - Path to folder for saving .npy files for each event
+        min_len: int - Minimum number of unique points allowed in an event
+        max_len: int - Maximum number of unique points allowed in an event
+
+    Returns:
+        None
+    '''
 
     file = h5py.File(file_path, 'r')
     keys = list(file.keys())
@@ -17,28 +42,44 @@ def get_file_and_lengths(file_path):
     for i, k in enumerate(keys):
         lengths[i] = len(file[k])
 
-    return file, lengths
-
-
-def get_complete_event(file, lengths, min_len, max_len, save_path):
-
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
     for i, k in enumerate(file):
+
         if lengths[i] < min_len or lengths[i] > max_len:
             continue
+
         event = np.ndarray((lengths[i], 4))
         for idx, p in enumerate(file[k]):
             event[idx, 0] = p[0]
             event[idx, 1] = p[1]
             event[idx, 2] = p[2]
             event[idx, 3] = p[4]
+
+        # Save each event with a random hash
         name = f"{save_path}/{random.getrandbits(128):032x}.npy"
         np.save(name, event)
 
 
 def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
+    '''
+    Splits events into train, val, and test sets
+
+    Parameters:
+        mg_path: str - path to 22Mg events
+        o_path: str - path to 16O events
+        train_split: float - percentage of events to put in train set
+        val_split: float - percentage of events to put in val set
+
+    Returns:
+        train: np.ndarray - hahses that are part of the train set 
+                            (and which isotope they are)
+        val: np.ndarray - hashes that are part of the val set
+                          (and which isotope they are)
+        test: np.ndarray - hashes that are part of the test set
+                           (and which isotope they are)
+    '''
     
     mg_hashes = os.listdir(mg_path)
     o_hashes = os.listdir(o_path)
@@ -48,7 +89,7 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
     for h in mg_hashes:
         name_arr[i] = (h.split('.')[0], '22Mg')
         i += 1
-    for h in mg_hashes:
+    for h in o_hashes:
         name_arr[i] = (h.split('.')[0], '16O')
         i += 1
 
@@ -67,7 +108,20 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
 
 def make_category_file(train, val, test, path):
     '''
+    Creates .json category file for dataset.
     Needs Tuning -- Fucks up with commas a bit
+
+    Parameters:
+        train: np.ndarray - hahses that are part of the train set 
+                            (and which isotope they are)
+        val: np.ndarray - hashes that are part of the val set
+                          (and which isotope they are)
+        test: np.ndarray - hashes that are part of the test set
+                           (and which isotope they are)
+        path: str - path to category file
+
+    Returns:
+        None
     '''
 
     with open(path, 'w') as jason:
@@ -140,3 +194,19 @@ def make_category_file(train, val, test, path):
         jason.write("\t}\n")
 
         jason.write("]")
+        return
+    
+
+
+
+
+if __name__ == '__main__':
+
+    MG_FILE_PATH = '/data'
+    O_FILE_PATH = '/data'
+
+    MG_SAVE_PATH = ''
+    O_SAVE_PATH = ''
+
+    MIN_N_POINTS = 0
+    MAX_N_POINTS = 0
