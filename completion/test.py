@@ -41,7 +41,7 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
         multiplier = 1e3
     elif config.loss_func == 'cd_l2':
         multiplier = 1e4
-    elif config.loss_func == 'emd':
+    elif 'emd' in config.loss_func:
         multiplier = 1e2
 
     loss_names = ["pc", "p1", "p2", "p3"]
