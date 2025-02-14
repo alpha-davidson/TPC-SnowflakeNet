@@ -1,7 +1,7 @@
 dataset :
   category_file_path : ./category_files/mg22_o16.json
-  partial_cloud_path : ../data/%s/partial/%s/%s.npy
-  gt_cloud_path : ../data/%s/complete/%s.npy
+  partial_cloud_path : ../data/%s/partial/%s/%s.npy # % (subset, hash, cut_fn)
+  gt_cloud_path : ../data/%s/complete/%s.npy # % (subset, hash)
   n_points : 2048
   train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_train.npy,
             complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_train.npy
@@ -42,7 +42,7 @@ model :
 
 batch_size : 64
 include_q : True
-include_o : False
+include_o : True
 num_workers : 4
 step_per_update: 1
 epochs : 5000

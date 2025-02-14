@@ -51,14 +51,14 @@ def train(config, args):
         output_dir = os.path.join("./exp", '%s', datetime.now().isoformat())
     else:
         output_dir = os.path.join('./exp', '%s', args.exp_name)
-    config.dataset.train.path_checkpoints = output_dir % 'checkpoints'
-    config.dataset.train.path_logs = output_dir % 'logs'
-    if not os.path.exists(config.dataset.train.path_checkpoints):
-        os.makedirs(config.dataset.train.path_checkpoints)
+    path_checkpoints = output_dir % 'checkpoints'
+    path_logs = output_dir % 'logs'
+    if not os.path.exists(path_checkpoints):
+        os.makedirs(path_checkpoints)
 
     # log writers
-    train_writer = SummaryWriter(os.path.join(config.dataset.train.path_logs, 'train'))
-    val_writer = SummaryWriter(os.path.join(config.dataset.train.path_logs, 'val'))
+    train_writer = SummaryWriter(os.path.join(path_logs, 'train'))
+    val_writer = SummaryWriter(os.path.join(path_logs, 'val'))
 
     init_epoch = 1
     best_metric = float('inf')

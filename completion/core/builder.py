@@ -20,7 +20,7 @@ def get_dataloader(config, split, args=None):
 
     return torch.utils.data.DataLoader(dataset=dataset,
                                        batch_size=1 if split == 'test' else config.batch_size,
-                                       shuffle=False,
+                                       shuffle=True,
                                     #    collate_fn=collate_fn,
                                        drop_last=split=='train',
                                        num_workers=int(config.num_workers))
