@@ -3,13 +3,12 @@ Processes and cuts .h5 files of simulated AT-TPC data
 into one numpy array per event for track completion
 
 Author: Ben Wagner
-Date Created: 2/12/25
-
+Date Created: 12 Feb 2025
+Date Edited:  13 Feb 2025
 """
 
 
 import numpy as np
-import json
 import os
 import h5py
 import random
@@ -110,7 +109,6 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
 def make_category_file(train, val, test, path):
     '''
     Creates .json category file for dataset.
-    Needs Tuning -- Commas are missing/misplaced
 
     Parameters:
         train: np.ndarray - hahses that are part of the train set 
@@ -131,76 +129,76 @@ def make_category_file(train, val, test, path):
 
         jason.write("\t{\n")
         
-        jason.write("\t\t\"experiment\": \"22Mg\",\n")
+        jason.write("\t\t\"experiment\": \"16O\",\n")
         jason.write("\t\t\"train\": [\n")
 
-        for event in train[:-1]:
-            if event['exp'] != "22Mg":
-                continue
+        end = 0
+        for event in train:
+            if train[end+1]['experiment'] != "16O":
+                break
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if train[-1]['exp'] == "22Mg":
-            jason.write(f"\t\t\t\"{train[-1]['hash']}\"\n")
+            end += 1
+        jason.write(f"\t\t\t\"{train[end]['hash']}\"\n")
         jason.write("\t\t],\n")
 
         jason.write("\t\t\"val\": [\n")
-        for event in val[:-1]:
-            if event['exp'] != "22Mg":
+        end = 0
+        for event in val:
+            if val[end+1]['experiment'] != "16O":
                 continue
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if val[-1]['exp'] == "22Mg":
-            jason.write(f"\t\t\t\"{val[-1]['hash']}\"\n")
+            end += 1
+        jason.write(f"\t\t\t\"{val[end]['hash']}\"\n")
         jason.write("\t\t],\n")
 
         jason.write("\t\t\"test\": [\n")
-        for event in test[:-1]:
-            if event['exp'] != "22Mg":
+        end = 0
+        for event in test:
+            if test[end+1]['experiment'] != "16O":
                 continue
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if test[-1]['exp'] == "22Mg":
-            jason.write(f"\t\t\t\"{test[-1]['hash']}\"\n")
+            end += 1
+        jason.write(f"\t\t\t\"{test[end]['hash']}\"\n")
         jason.write("\t\t]\n")
 
         jason.write("\t},\n")
 
         jason.write("\t{\n")
-        jason.write("\t\t\"experiment\": \"16O\",\n")
+        jason.write("\t\t\"experiment\": \"22Mg\",\n")
         jason.write("\t\t\"train\": [\n")
 
         for event in train[:-1]:
-            if event['exp'] != "16O":
+            if event['experiment'] != "22Mg":
                 continue
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if train[-1]['exp'] == '16O':
-            jason.write(f"\t\t\t\"{train[-1]['hash']}\"\n")
+
+        jason.write(f"\t\t\t\"{train[-1]['hash']}\"\n")
         jason.write("\t\t],\n")
 
         jason.write("\t\t\"val\": [\n")
         for event in val[:-1]:
-            if event['exp'] != "16O":
+            if event['experiment'] != "22Mg":
                 continue
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if val[-1]['exp'] == '16O':
-            jason.write(f"\t\t\t\"{val[-1]['hash']}\"\n")
+        jason.write(f"\t\t\t\"{val[-1]['hash']}\"\n")
         jason.write("\t\t],\n")
 
         jason.write("\t\t\"test\": [\n")
         for event in test[:-1]:
-            if event['exp'] != "16O":
+            if event['experiment'] != "22Mg":
                 continue
             jason.write(f"\t\t\t\"{event['hash']}\",\n")
-        if test[-1]['exp'] == '16O':
-            jason.write(f"\t\t\t\"{test[-1]['hash']}\"\n")
+        jason.write(f"\t\t\t\"{test[-1]['hash']}\"\n")
         jason.write("\t\t]\n")
 
-        jason.write("\t}\n")
-
-        jason.write("]")
+        jason.write("\t}\n]")
         return
     
 
 def sort_files(mg_path, o_path, train, val, test):
     '''
-    Reorganizes files based on their dataset
+    Reorganizes files based on their dataset.
+    Raises a NameError if an unknown hash is encountered
 
     Parameters:
         mg_path: str - 
@@ -213,35 +211,55 @@ def sort_files(mg_path, o_path, train, val, test):
         None
     '''
 
+    # Ensure folders exist / create if they don't
+    trunc_path = '/'.join(mg_path.split('/')[:-2])
+    if not os.path.exists(f"./train/"):
+        os.mkdir("./train")
+    if not os.path.exists("./train/complete"):
+        os.mkdir("./train/complete")
+    if not os.path.exists(f"./val/"):
+        os.mkdir("./val")
+    if not os.path.exists("./val/complete"):
+        os.mkdir("./val/complete")
+    if not os.path.exists(f"./test/"):
+        os.mkdir("./test")
+    if not os.path.exists("./test/complete"):
+        os.mkdir("./test/complete")
+
+    # Reorganize files
     for file in os.listdir(mg_path):
 
         hsh = file.split(".")[0]
 
         if hsh in train['hash']:
-            os.rename(mg_path+file, mg_path+'train/complete/'+file)
+            os.rename(mg_path+file, trunc_path+'/train/complete/'+file)
         elif hsh in val['hash']:
-            os.rename(mg_path+file, mg_path+'val/complete/'+file)
+            os.rename(mg_path+file, trunc_path+'/val/complete/'+file)
         elif hsh in test['hash']:
-            os.rename(mg_path+file, mg_path+'test/complete/'+file)
+            os.rename(mg_path+file, trunc_path+'/test/complete/'+file)
         else:
-            raise NameError()
+            raise NameError(f"Hash {hsh} not found with 22Mg files")
 
     for file in os.listdir(o_path):
     
         hsh = file.split(".")[0]
         if hsh in train['hash']:
-            os.rename(o_path+file, o_path+'train/complete/'+file)
+            os.rename(o_path+file, trunc_path+'/train/complete/'+file)
         elif hsh in val['hash']:
-            os.rename(o_path+file, o_path+'val/complete/'+file)
+            os.rename(o_path+file, trunc_path+'/val/complete/'+file)
         elif hsh in test['hash']:
-            os.rename(o_path+file, o_path+'test/complete/'+file)
+            os.rename(o_path+file, trunc_path+'/test/complete/'+file)
         else:
-            raise NameError()
+            raise NameError(f"Hash {hsh} not found with 16O files")
+        
+    # Remove old folders
+    os.rmdir("./mg22")
+    os.rmdir("./o16")
 
     return
 
 
-def create_partial_clouds(mg_path, o_path, percentage_cut=0.25):
+def create_partial_clouds(path, percentage_cut=0.25):
     '''
     Cuts complete cloud into 3 partial clouds: center, random, and downsampled
 
@@ -254,57 +272,48 @@ def create_partial_clouds(mg_path, o_path, percentage_cut=0.25):
         None
     '''
 
+    # Ensure folders exist / create if they don't
+    if not os.path.exists("./train/partial"):
+        os.mkdir("./train/partial")
+    if not os.path.exists("./val/partial"):
+        os.mkdir("./val/partial")
+    if not os.path.exists("./test/partial"):
+        os.mkdir("./test/partial")
+
     rng = np.random.default_rng()
 
     for split in ('/train', '/val', '/test'):
-        for file in os.listdir(mg_path+split+'/complete'):
-            event = np.load(file)
-            k = len(event) * percentage_cut
+        for file in os.listdir(path+split+'/complete'):
+            event = np.load(path+split+'/complete/'+file)
+            k = int(len(event) * percentage_cut)
 
             center = cf.center_cut(event, k)
-            rand = cf.rand_cut(event, rng)
+            rand = cf.rand_cut(event, k, rng)
             down = cf.down_sample(event, k)
 
             hsh = file.split('.')[0]
-            if not os.path.exists(mg_path+split+f'/partial/{hsh}'):
-                os.mkdir(mg_path+split+f'/partial/{hsh}')
+            if not os.path.exists(path+split+f'/partial/{hsh}'):
+                os.mkdir(path+split+f'/partial/{hsh}')
 
-            np.save(mg_path+split+f'/partial/{hsh}/center.npy', center)
-            np.save(mg_path+split+f'/partial/{hsh}/rand.npy', rand)
-            np.save(mg_path+split+f'/partial/{hsh}/down.npy', down)
-
-    for split in ('/train', '/val', '/test'):
-        for file in os.listdir(o_path+split+'/complete'):
-            event = np.load(file)
-            k = len(event) * percentage_cut
-
-            center = cf.center_cut(event, k)
-            rand = cf.rand_cut(event, rng)
-            down = cf.down_sample(event, k)
-
-            hsh = file.split('.')[0]
-            if not os.path.exists(o_path+split+f'/partial/{hsh}'):
-                os.mkdir(o_path+split+f'/partial/{hsh}')
-
-            np.save(o_path+split+f'/partial/{hsh}/center.npy', center)
-            np.save(o_path+split+f'/partial/{hsh}/rand.npy', rand)
-            np.save(o_path+split+f'/partial/{hsh}/down.npy', down)
+            np.save(path+split+f'/partial/{hsh}/center.npy', center)
+            np.save(path+split+f'/partial/{hsh}/rand.npy', rand)
+            np.save(path+split+f'/partial/{hsh}/down.npy', down)
 
     return
 
 
 if __name__ == '__main__':
 
-    MG_FILE_PATH = '/data/'
-    O_FILE_PATH = '/data/'
+    MG_FILE_PATH = '/data/22Mg/point_clouds/simulated/output_digi_HDF_Mg22_Ne20pp_8MeV.h5'
+    O_FILE_PATH = '/data/16O/point_clouds/simulated/output_digi_HDF_2Body_2T.h5'
 
-    MG_SAVE_PATH = ''
-    O_SAVE_PATH = ''
+    MG_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/mg22/'
+    O_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/o16/'
 
-    MIN_N_POINTS = 0
-    MAX_N_POINTS = 0
+    MIN_N_POINTS = 50
+    MAX_N_POINTS = 750
 
-    CATEGORY_FILE_PATH = '../completion/category_files/'
+    CATEGORY_FILE_PATH = '../completion/category_files/mg22_o16.json'
 
     # Process
     process_file(MG_FILE_PATH, MG_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
@@ -312,8 +321,11 @@ if __name__ == '__main__':
 
     # Split and sort
     train, val, test = get_ttv_split(MG_SAVE_PATH, O_SAVE_PATH)
+    train = np.sort(train, order='experiment')
+    val = np.sort(val, order='experiment')
+    test = np.sort(test, order='experiment')
     make_category_file(train, val, test, CATEGORY_FILE_PATH)
     sort_files(MG_SAVE_PATH, O_SAVE_PATH, train, val, test)
 
     # Cut
-    create_partial_clouds(MG_SAVE_PATH, O_SAVE_PATH)
+    create_partial_clouds(".")

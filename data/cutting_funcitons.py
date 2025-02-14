@@ -4,8 +4,9 @@ with simulated data
 
 Author: Ben Wagner
 Date Created: 11 Feb 2025
-Date Edited:
+Date Edited:  13 Feb 2025
 """
+
 
 import numpy as np
 
@@ -30,7 +31,7 @@ def center_cut(ev, k):
     cut = ev[idxs[k:]]
 
     # Shuffle points in event
-    np.random.shuffle(cut, axis=0)
+    np.random.shuffle(cut)
     return cut
 
 
@@ -80,7 +81,7 @@ def middle_cut(ev, k):
 
     # Cut event and shuffle points in event
     cut = sorted_ev[low:high]
-    np.random.shuffle(cut, axis=0)
+    np.random.shuffle(cut)
 
     return cut
 
@@ -97,7 +98,7 @@ def down_sample(ev, k):
         Downsmapled event
     '''
 
-    np.random.shuffle(ev, axis=0)
+    np.random.shuffle(ev)
 
     return ev[k:]
 

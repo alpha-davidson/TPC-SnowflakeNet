@@ -3,7 +3,8 @@ Processes and cuts .h5 files of simulated AT-TPC data
 into one numpy array for track completion
 
 Author: Ben Wagner
-Date Created: 2/12/25
+Date Created: 12 Feb 2025
+Date Edited:  13 Feb 2025
 """
 
 
