@@ -57,6 +57,8 @@ class ALPhaDataLoader(object):
         self.dataset_categories = []
         with open(config.dataset.category_file_path, 'r') as f:
             self.dataset_categories = json.loads(f.read())
+        if not self.config.include_o:
+            self.dataset_categories = self.dataset_categories[1:]
 
     def get_datset(self, subset):
 
