@@ -195,24 +195,27 @@ def make_category_file(train, val, test, path):
         return
     
 
-def sort_files(mg_path, o_path, train, val, test):
+def sort_files(mg_path, o_path, save_path, train, val, test):
     '''
     Reorganizes files based on their dataset.
     Raises a NameError if an unknown hash is encountered
 
     Parameters:
-        mg_path: str - 
-        o_path: str - 
-        train: np.ndarray - 
-        val: np.ndarray - 
-        test: np.ndarray - 
+        mg_path: str - path to where 22Mg files were initially stored
+        o_path: str - path to where 16O files were initially stored
+        save_path: str - path to where files will be stored properly
+        train: np.ndarray - hahses that are part of the train set 
+                            (and which isotope they are)
+        val: np.ndarray - hahses that are part of the val set 
+                            (and which isotope they are)
+        test: np.ndarray - hahses that are part of the test set 
+                            (and which isotope they are)
 
     Returns:
         None
     '''
 
     # Ensure folders exist / create if they don't
-    trunc_path = '/'.join(mg_path.split('/')[:-2])
     if not os.path.exists(f"./train/"):
         os.mkdir("./train")
     if not os.path.exists("./train/complete"):
@@ -232,11 +235,11 @@ def sort_files(mg_path, o_path, train, val, test):
         hsh = file.split(".")[0]
 
         if hsh in train['hash']:
-            os.rename(mg_path+file, trunc_path+'/train/complete/'+file)
+            os.rename(mg_path+file, save_path+'/train/complete/'+file)
         elif hsh in val['hash']:
-            os.rename(mg_path+file, trunc_path+'/val/complete/'+file)
+            os.rename(mg_path+file, save_path+'/val/complete/'+file)
         elif hsh in test['hash']:
-            os.rename(mg_path+file, trunc_path+'/test/complete/'+file)
+            os.rename(mg_path+file, save_path+'/test/complete/'+file)
         else:
             raise NameError(f"Hash {hsh} not found with 22Mg files")
 
@@ -244,17 +247,17 @@ def sort_files(mg_path, o_path, train, val, test):
     
         hsh = file.split(".")[0]
         if hsh in train['hash']:
-            os.rename(o_path+file, trunc_path+'/train/complete/'+file)
+            os.rename(o_path+file, save_path+'/train/complete/'+file)
         elif hsh in val['hash']:
-            os.rename(o_path+file, trunc_path+'/val/complete/'+file)
+            os.rename(o_path+file, save_path+'/val/complete/'+file)
         elif hsh in test['hash']:
-            os.rename(o_path+file, trunc_path+'/test/complete/'+file)
+            os.rename(o_path+file, save_path+'/test/complete/'+file)
         else:
             raise NameError(f"Hash {hsh} not found with 16O files")
         
     # Remove old folders
-    os.rmdir("./mg22")
-    os.rmdir("./o16")
+    os.rmdir(mg_path)
+    os.rmdir(o_path)
 
     return
 
@@ -264,9 +267,8 @@ def create_partial_clouds(path, percentage_cut=0.25):
     Cuts complete cloud into 3 partial clouds: center, random, and downsampled
 
     Parameters:
-        mg_path: str - 
-        o_path: str - 
-        percentage_cut: float - 
+        path: str - path to where files will be stored properly
+        percentage_cut: float - percentage of points cut from each event
 
     Returns:
         None
@@ -307,8 +309,12 @@ if __name__ == '__main__':
     MG_FILE_PATH = '/data/22Mg/point_clouds/simulated/output_digi_HDF_Mg22_Ne20pp_8MeV.h5'
     O_FILE_PATH = '/data/16O/point_clouds/simulated/output_digi_HDF_2Body_2T.h5'
 
+    # Make sure to edit these paths accordingly, for some reason it doesn't
+    # like it when ~ is used instead of /home/DAVIDSON/username
     MG_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/mg22/'
     O_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/o16/'
+
+    FINAL_PATH = "."
 
     MIN_N_POINTS = 50
     MAX_N_POINTS = 750
@@ -325,7 +331,7 @@ if __name__ == '__main__':
     val = np.sort(val, order='experiment')
     test = np.sort(test, order='experiment')
     make_category_file(train, val, test, CATEGORY_FILE_PATH)
-    sort_files(MG_SAVE_PATH, O_SAVE_PATH, train, val, test)
+    sort_files(MG_SAVE_PATH, O_SAVE_PATH, FINAL_PATH, train, val, test)
 
     # Cut
-    create_partial_clouds(".")
+    create_partial_clouds(FINAL_PATH)
