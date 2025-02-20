@@ -66,7 +66,7 @@ class ALPhaDataLoader(object):
         transforms = self._get_transforms()
 
         return ALPhADataset({'required_items' : ['partial_cloud', 'gt_cloud'],
-                             'shuffle' : subset == 'train'},
+                             'shuffle' : subset != 'test'},
                               file_list, transforms)
 
     def _get_file_list(self, subset):
@@ -91,9 +91,15 @@ class ALPhaDataLoader(object):
         return Compose([{
                 'callback': 'DownUpSamplePoints',
                 'parameters': {
-                    'n_points': self.config.dataset.n_points
+                    'n_points': self.config.dataset.partial_points
                 },
                 'objects': ['partial_cloud']
+            }, {
+                'callback': 'DownUpSamplePoints',
+                'parameters': {
+                    'n_points': self.config.dataset.complete_points
+                },
+                'objects': ['gt_cloud']
             }, {
                 'callback': 'MinMaxDownScale',
                 'parameters': {'config': self.config},

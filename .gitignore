@@ -1,4 +1,4 @@
-scripts/
+scripts/*.log
 completion/exp/
 completion/core/datasets/__pycache__/
 data/__pycache__/

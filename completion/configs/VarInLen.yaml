@@ -2,16 +2,8 @@ dataset :
   category_file_path : ./category_files/mg22_o16.json
   partial_cloud_path : ../data/%s/partial/%s/%s.npy # % (subset, hash, cut_fn)
   gt_cloud_path : ../data/%s/complete/%s.npy # % (subset, hash)
-  n_points : 2048
-  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_train.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_train.npy
-          }
-  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_val.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_val.npy
-          }
-  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/filtered_mg-o_partial_test.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/filtered_mg-o_complete_test.npy
-          }
+  partial_points : 512 # npoints in partial cloud
+  complete_points : 2048 # npoints in complete cloud
 
 
 optimizer : {
@@ -40,12 +32,12 @@ model :
   bounding : True
 
 
-batch_size : 64
+batch_size : 32
 include_q : True
-include_o : True
+include_o : False
 num_workers : 4
 step_per_update: 1
-epochs : 5000
+epochs : 5000 # training crashes due to NaNs in the loss well before this number (exact epoch depends on dataset and lr)
 save_freq : 20
 loss_func : cd_l1
 gpu : [0]

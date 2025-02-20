@@ -168,7 +168,7 @@ def train(config, args):
 
         # Save checkpoints
         if cd_eval < best_metric:
-            output_path = os.path.join(config.dataset.train.path_checkpoints, "ckpt-best.pth")
+            output_path = os.path.join(path_checkpoints, "ckpt-best.pth")
             torch.save({
                 'epoch_index': epoch_idx,
                 'best_metric': best_metric,
@@ -180,7 +180,7 @@ def train(config, args):
             if cd_eval < best_metric:
                 best_metric = cd_eval
 
-        last_path = os.path.join(config.dataset.train.path_checkpoints, "ckpt-last.pth")
+        last_path = os.path.join(path_checkpoints, "ckpt-last.pth")
         torch.save({
             'epoch_index' : epoch_idx,
             'best_metric' : best_metric,
