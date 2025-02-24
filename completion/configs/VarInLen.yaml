@@ -39,7 +39,7 @@ num_workers : 4
 step_per_update: 1
 epochs : 5000 # training crashes due to NaNs in the loss well before this number (exact epoch depends on dataset and lr)
 save_freq : 20
-loss_func : cd_l1
+loss_func : emd4d
 gpu : [0]
 seed : 2024
 

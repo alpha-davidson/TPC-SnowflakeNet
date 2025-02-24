@@ -3,7 +3,7 @@ import torch
 sys.path.append('..')
 
 # from loss_functions import chamfer_l1, chamfer_l2, chamfer_partial_l1, chamfer_partial_l2, emd_loss
-from loss_functions import chamfer_4DDist, emdModule
+from loss_functions import chamfer_4DDist, emdModule, emd4dModule
 from models.utils import fps_subsample
 
 class Completionloss:
@@ -11,6 +11,7 @@ class Completionloss:
         self.loss_func = loss_func
         self.chamfer_dist = chamfer_4DDist()
         self.EMD = torch.nn.DataParallel(emdModule().cuda()).cuda()
+        self.EMD_4D = torch.nn.DataParallel(emd4dModule().cuda()).cuda()
 
         if loss_func == 'cd_l1':
             self.metric = self.chamfer_l1
@@ -20,6 +21,8 @@ class Completionloss:
             self.partial_matching = self.chamfer_partial_l2
         elif loss_func == 'emd':
             self.metric = self.emd_loss
+        elif loss_func == 'emd4d':
+            self.metric = self.emd_4d_loss
         else:
             raise Exception('loss function {} not supported yet!'.format(loss_func))
 
@@ -48,6 +51,12 @@ class Completionloss:
         d = torch.sqrt(d1).mean(1).mean()
 
         return d
+    
+    def emd_4d_loss(self, p1, p2):
+        d1, _ = self.EMD_4D(p1, p2, eps=0.005, iters=50)
+        d = torch.sqrt(d1).mean(1).mean()
+
+        return d
 
     def get_loss(self, pcds_pred, partial, gt):
 
@@ -59,7 +68,7 @@ class Completionloss:
             loss_c = self.metric(Pc, gt_c)
             loss_1 = self.metric(P1, gt)
 
-            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P1)
+            partial_matching = torch.tensor(0).cuda() if 'emd' in self.loss_func else self.partial_matching(partial, P1)
 
             loss_all = loss_c + loss_1 + partial_matching
             losses = [partial_matching, loss_c, loss_1]
@@ -75,7 +84,7 @@ class Completionloss:
             loss_1 = self.metric(P1, gt_1)
             loss_2 = self.metric(P2, gt)
 
-            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P2)
+            partial_matching = torch.tensor(0).cuda() if 'emd' in self.loss_func else self.partial_matching(partial, P2)
 
             loss_all = loss_c + loss_1 + loss_2 + partial_matching
             losses = [partial_matching, loss_c, loss_1, loss_2]
@@ -93,7 +102,7 @@ class Completionloss:
             loss_2 = self.metric(P2, gt_2)
             loss_3 = self.metric(P3, gt)
 
-            partial_matching = torch.tensor(0).cuda() if self.loss_func == 'emd' else self.partial_matching(partial, P3)
+            partial_matching = torch.tensor(0).cuda() if 'emd' in self.loss_func else self.partial_matching(partial, P3)
 
             loss_all = loss_c + loss_1 + loss_2 + loss_3 + partial_matching
             losses = [partial_matching, loss_c, loss_1, loss_2, loss_3]

@@ -86,7 +86,7 @@ def train(config, args):
         multiplier = 1e3
     elif config.loss_func == 'cd_l2':
         multiplier = 1e4
-    elif config.loss_func == 'emd':
+    elif 'emd' in config.loss_func:
         multiplier = 1e2
 
     completion_loss = loss_util.Completionloss(loss_func=config.loss_func)
