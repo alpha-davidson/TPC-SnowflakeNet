@@ -98,7 +98,7 @@ def test(config, model=None, test_dataloader=None, epoch_idx=-1, validation=Fals
         test_writer.add_scalar('Loss/Epoch/loss_output', test_losses.avg(4), epoch_idx)
         test_writer.add_scalar('Loss/Epoch/loss_total', test_losses.avg(5), epoch_idx)
 
-    return test_losses.avg(3), test_losses.avg(4)
+    return test_losses.avg(4), test_losses.avg(5)
 
 
 if __name__ == '__main__':

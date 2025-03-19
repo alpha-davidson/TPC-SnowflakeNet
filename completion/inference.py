@@ -29,7 +29,7 @@ def my_inference(model, args, config):
 
     with torch.no_grad():
         
-        data_loader = builder.get_dataloader(config, "test", args)
+        data_loader = builder.get_dataloader(config, "test")
 
         for idx, (experiment, data) in enumerate(data_loader):
 
