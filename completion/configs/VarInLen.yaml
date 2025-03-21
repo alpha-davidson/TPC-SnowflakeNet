@@ -1,23 +1,15 @@
 dataset :
-  category_file_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/category_file.json
-  partial_cloud_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/%s/partial/%s/%s.npy
-  gt_cloud_path : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/variable_length/%s/complete/%s.npy
-  n_points : 2048
-  train : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/Mg_O_combo_train_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/Mg_O_combo_train_labels.npy
-          }
-  val   : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/Mg_O_combo_val_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/Mg_O_combo_val_labels.npy
-          }
-  test  : { partial : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/384p/Mg_O_combo_test_feats.npy,
-            complete : /home/DAVIDSON/bewagner/data/22Mg_16O_combo/simulated/512c/Mg_O_combo_test_labels.npy
-          }
+  category_file_path : ./category_files/mg22_o16.json
+  partial_cloud_path : ../data/%s/partial/%s/%s.npy # % (subset, hash, cut_fn)
+  gt_cloud_path : ../data/%s/complete/%s.npy # % (subset, hash)
+  partial_points : 512 # npoints in partial cloud
+  complete_points : 2048 # npoints in complete cloud
 
 
 optimizer : {
   type: Adam,
   kwargs: {
-  # lr : 0.001, 
+  lr : 0.0005 
   # weight_decay : 0
   }
 }
@@ -26,8 +18,8 @@ optimizer : {
 scheduler: {
   type: StepLR,
   kwargs: {
-    step_size: 150,
-    gamma : 0.1
+    step_size: 100,
+    gamma : 0.5
   }
 }
             
@@ -42,9 +34,10 @@ model :
 
 batch_size : 32
 include_q : True
+include_o : False
 num_workers : 4
 step_per_update: 1
-epochs : 5000
+epochs : 5000 # training crashes due to NaNs in the loss well before this number (exact epoch depends on dataset and lr)
 save_freq : 20
 loss_func : emd4d
 gpu : [0]
