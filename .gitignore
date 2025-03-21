@@ -25,7 +25,9 @@ models/__pycache__/
 models/pointnet2_ops_lib/build/
 models/pointnet2_ops_lib/pointnet2_ops.egg-info/
 models/pointnet2_ops_lib/dist/
+scripts/*.err
 scripts/*.log
+scripts/*.out
 testing.ipynb
 transformer_list.txt
 *.npy
