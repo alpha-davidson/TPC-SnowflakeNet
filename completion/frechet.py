@@ -77,7 +77,7 @@ def train_model(train_feats_path, train_labels_path, val_feats_path,
     return model, latent
 
 
-def load_model(model_path, latnet_path):
+def load_model(model_path, latent_path):
     '''
     Loads in pretrained models
 
@@ -90,9 +90,7 @@ def load_model(model_path, latnet_path):
         latent: tf.keras.Model - latent space
     '''
 
-    return None, \
-        tf.keras.models.load_model(model_path), \
-        tf.keras.models.load_model(latnet_path)
+    return tf.keras.models.load_model(model_path), tf.keras.models.load_model(latent_path)
 
 
 def compute_cov_mean(feats):
@@ -182,11 +180,10 @@ def main(gt_path, preds_path, model_path, latent_path, train_feats_path,
 
 if __name__ == '__main__':
 
-    GT_PATH = 'gts.npy'
+    GT_PATH = 'justMg_gts.npy'
     PRED_PATHS = {
-        '22Mg Only: 512 in - 2048 Out' : 'preds.npy',
-        'Test A' : 'preds.npy',
-        'Test B' : 'preds.npy'
+        '22Mg Only' : 'justMg_preds.npy',
+        '22Mg and 16O' : 'MgO_preds.npy'
         }
     
     NEW_TRAIN = False
