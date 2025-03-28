@@ -4,14 +4,14 @@ Calculates Fréchet Point Cloud Distance
 ****************************************************************************
     Since FPCD compares the latent space of a separate model, this file
     requires a pretrained PointNet classifier from the alpha-davidson
-    downstream-benchmarks repository. As a reult, this file also needs
+    downstream-benchmarks repository. As a result, this file also needs
     to be run in that virtual environment, not the virtual environment
     used to train a SnowflakeNet model
 ****************************************************************************
 
 Author: Ben Wagner
 Date Created: 27 Feb 2025
-Date Edited:  03 Mar 2025
+Date Edited:  26 Mar 2025
 """
 
 import tensorflow as tf
@@ -28,6 +28,19 @@ from models.pointnet import create_pointnet_model
 def train_model(train_feats_path, train_labels_path, val_feats_path,
                 val_labels_path, model_save_path, latent_save_path):
     '''
+    Trains a new pointnet classification model
+
+    Parameters:
+        train_feats_path: str - path to train features
+        train_labels_path: str - path to train labels
+        val_feats_path: str - path to val features
+        val_labels_path: str - path to val labels
+        model_save_path: str - where to save complete model
+        latent_save_path: str - where to save latent model
+
+    Returns:
+        model: tf.keras.Model - complete model
+        latent: tf.keras.Model - latent model
     '''
 
     train_feats = np.load(train_feats_path)
@@ -133,7 +146,14 @@ def frechet(pred, gt):
 
 def visualize(frechet_results, f_score):
     '''
-    
+    Visual comparison of FPCD between different models
+
+    Parameters:
+        frechet_results: np.ndarray of (str, np.float64) - model and its FPCD
+        f_score: float - F1 score of complete model who's latent space is used
+
+    Returns:
+        None
     '''
 
     model_names = frechet_results['model']
@@ -148,29 +168,38 @@ def visualize(frechet_results, f_score):
     plt.savefig("frechet_results.png")
 
 
-def main(gt_path, preds_path, model_path, latent_path, train_feats_path,
-         train_labels_path, val_feats_path, val_labels_path, test_feats_path,
-         test_labels_path, new=True):
+def main(gt_pth, prd_pth, m_pth, l_pth, tr_f_pth, tr_l_pth, v_f_pth, v_l_pth, te_f_pth, te_l_pth, new=True):
     '''
+    Computes and Visaulizes FPCD
+
+    Parameters:
+        gt_pth: str - path to ground truth events
+        prd_pth: dict - keys are model names, values are the model's output
+        m_pth: str - path to complete model
+        l_pth: str - path to latent model
+        tr_f_pth: str - path to train features
+        tr_l_pth: str - path to train labels
+        v_f_pth: str - path to val features
+        v_l_pth: str - path to val labels
+        te_f_pth: str - path to test features
+        te_l_pth: str - path to test labels
+        new: bool - whether or not to train a new model, default=True
+
+    Returns:
+        None
     '''
 
-    if new:
-        model, latent = train_model(train_feats_path, train_labels_path,
-                                    val_feats_path, val_labels_path,
-                                    model_path, latent_path)
-    else:
-        model, latent = load_model(model_path, latent_path)
+    model, latent = train_model(tr_f_pth, tr_l_pth, v_f_pth, v_l_pth, m_pth, l_pth) if new else load_model(m_pth, l_pth)
 
-    y_pred = model.predict(np.load(test_feats_path))
-    model_f_score = f1_score(np.load(test_labels_path), np.argmax(y_pred, axis=-1), average='weighted')
+    y_pred = model.predict(np.load(te_f_pth))
+    model_f_score = f1_score(np.load(te_l_pth), np.argmax(y_pred, axis=-1), average='weighted')
 
-    gt_feats = latent.predict(np.load(gt_path))
-    frechet_results = np.ndarray((len(preds_path.keys())),
-                                 dtype=[('model', 'object'), ('fpcd', np.float32)])
+    gt_feats = latent.predict(np.load(gt_pth))
+    frechet_results = np.ndarray((len(prd_pth.keys())), dtype=[('model', 'object'), ('fpcd', np.float64)])
 
-    for i, k in enumerate(preds_path.keys()):
+    for i, k in enumerate(prd_pth.keys()):
 
-        pred = latent.predict(np.load(preds_path[k]))
+        pred = latent.predict(np.load(prd_pth[k]))
         frechet_results[i] = (k, frechet(pred, gt_feats))
 
     visualize(frechet_results, model_f_score)
@@ -186,15 +215,15 @@ if __name__ == '__main__':
         '22Mg and 16O' : 'MgO_preds.npy'
         }
     
-    NEW_TRAIN = False
-    MODEL_PATH = './exp/checkpoints/frechet/model.keras'
-    LATENT_PATH = './exp/checkpoints/frechet/latent.keras'
+    NEW_TRAIN    = False
+    MODEL_PATH   = './exp/checkpoints/frechet/model.keras'
+    LATENT_PATH  = './exp/checkpoints/frechet/latent.keras'
     TRAIN_F_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_train_features.npy'
     TRAIN_L_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_train_labels.npy'
-    VAL_F_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_val_features.npy'
-    VAL_L_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_val_labels.npy'
-    TEST_F_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_test_features.npy'
-    TEST_L_PATH = '../../voxel_data/Mg22_data/Mg22_size2048_test_labels.npy'
+    VAL_F_PATH   = '../../voxel_data/Mg22_data/Mg22_size2048_val_features.npy'
+    VAL_L_PATH   = '../../voxel_data/Mg22_data/Mg22_size2048_val_labels.npy'
+    TEST_F_PATH  = '../../voxel_data/Mg22_data/Mg22_size2048_test_features.npy'
+    TEST_L_PATH  = '../../voxel_data/Mg22_data/Mg22_size2048_test_labels.npy'
     
     main(GT_PATH, PRED_PATHS, MODEL_PATH, LATENT_PATH, TRAIN_F_PATH,
          TRAIN_L_PATH, VAL_F_PATH, VAL_L_PATH, TEST_F_PATH,
