@@ -5,6 +5,8 @@ import core.builder as builder
 from utils import misc, yaml_reader, helpers
 import argparse
 import os
+import sys
+sys.path.append("../")
 
 def get_args_from_command_line():
     parser = argparse.ArgumentParser(description='The argument parser of SnowflakeNet')
@@ -25,7 +27,7 @@ def my_inference(model, args, config):
         n_imgs_flag = int(args.n_imgs)
 
     if not os.path.exists(args.save_img_path):
-        os.mkdir(args.save_img_path)
+        os.makedirs(args.save_img_path)
 
     with torch.no_grad():
         

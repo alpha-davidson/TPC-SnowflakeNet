@@ -212,7 +212,7 @@ def pad_plane_w_threeD(input_pc, output_pc, gt_pc, idx, exp, config, args):
     bxs = xs[ys < 0]
     bys = ys[ys < 0]
 
-    fig = plt.figure(figsize=(15, 10))
+    fig = plt.figure(figsize=(15, 10), constrained_layout=True)
     fig.suptitle("Event "+str(idx).zfill(4)+" - "+exp)
 
     gs = GridSpec(2, 3)
@@ -362,7 +362,7 @@ def show_new_points(input_pc, output_pc, idx, path, config):
     threeD = plt.subplot(projection='3d')
 
     threeD.scatter(oxs, ozs, oys, c='red', s=1)
-    threeD.scatter(ixs, izs, iys, c='blue', s=1)
+    threeD.scatter(ixs, izs, iys, c='black', s=1)
 
     threeD.set_title("3D View")
 

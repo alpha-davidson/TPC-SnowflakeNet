@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 import core.builder as builder
 from utils import misc, yaml_reader, helpers
 import argparse
+import sys
 import os
+print(os.getcwd())
+sys.path.append("../")
 
 
 def get_args_from_command_line():
@@ -20,7 +23,7 @@ def get_args_from_command_line():
 def predict(model, args, config):
 
 
-    data_loader = builder.get_dataloader(config, "test", args)
+    data_loader = builder.get_dataloader(config, "test")
     gt_clouds = np.ndarray((len(data_loader), config.dataset.complete_points, 4), dtype=np.float32)
     pred_clouds = np.ndarray((len(data_loader), config.dataset.complete_points, 4), dtype=np.float32)
 
