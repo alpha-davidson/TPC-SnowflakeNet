@@ -2,8 +2,8 @@
 ### Job Parameters:
 # basic info
 #SBATCH --job-name "train-spd"                # name
-#SBATCH --output "TrainJustMgReal-out.log"      # output file
-#SBATCH --error  "TrainJustMgReal-err.log"      # error message file
+#SBATCH --output "Train_JustMg512In2048OutEMD.out"      # output file
+#SBATCH --error  "Train_JustMg512In2048OutEMD.err"      # error message file
 
 # resource request info 
 #SBATCH --mem=32G
@@ -22,4 +22,4 @@ source /opt/conda/bin/activate spd
 # module load fosscuda #OpenBLAS
 
 # execute python script in virtal env.
-python train.py --config ./configs/VarInLen.yaml --exp_name JustMgv2.0
+python train.py --config ./configs/JustMg.yaml --exp_name JustMg512In2048OutEMD

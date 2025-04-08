@@ -3,6 +3,7 @@ completion/core/__pycache__/
 completion/core/datasets/__pycache__
 completion/exp/
 completion/utils/__pycache__/
+completion/frechet_results.png
 data/__pycache__/
 imgs/
 loss_functions/__pycache__/
