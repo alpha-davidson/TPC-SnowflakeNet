@@ -3,6 +3,7 @@ completion/core/__pycache__/
 completion/core/datasets/__pycache__
 completion/exp/
 completion/utils/__pycache__/
+completion/frechet_results.png
 data/__pycache__/
 imgs/
 loss_functions/__pycache__/
@@ -25,7 +26,9 @@ models/__pycache__/
 models/pointnet2_ops_lib/build/
 models/pointnet2_ops_lib/pointnet2_ops.egg-info/
 models/pointnet2_ops_lib/dist/
+scripts/*.err
 scripts/*.log
+scripts/*.out
 testing.ipynb
 transformer_list.txt
 *.npy

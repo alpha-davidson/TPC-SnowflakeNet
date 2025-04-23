@@ -20,4 +20,7 @@ cd ~/TPC-SnowflakeNet/completion
 source /opt/conda/bin/activate spd
 
 # execute python script in virtal env.
-python inference.py --config ./configs/VarInLen.yaml --model ./exp/checkpoints/JustMgv2.0/ckpt-best.pth --save_img_path /home/DAVIDSON/bewagner/TPC-SnowflakeNet/imgs/JustMgReal/ --n_imgs "100"
+# python inference.py --config ./configs/JustMgCDL1.yaml --model ./exp/checkpoints/JustMg512In2048OutCDL1/ckpt-best.pth --n_imgs "100" --save_img_path ../imgs/JustMg512In2048OutCDL1
+# python inference.py --config ./configs/JustMgEMD.yaml --model ./exp/checkpoints/JustMg512In2048OutEMD/ckpt-best.pth --n_imgs "100" --save_img_path ../imgs/JustMg512In2048OutEMD
+python inference.py --config ./configs/MgAndOCDL1.yaml --model ./exp/checkpoints/MgAndO512In2048OutCDL1/ckpt-best.pth --n_imgs "100" --save_img_path ../imgs/MgAndO512In2048OutCDL1
+# python inference.py --config ./configs/MgAndOEMD.yaml --model ./exp/checkpoints/MgAndO512In2048Out/ckpt-best.pth --n_imgs "100" --save_img_path ../imgs/MgAndO512In2048Out

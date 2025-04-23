@@ -37,8 +37,8 @@ def train(config, args):
 
 
     # dataloaders
-    train_dataloader = builder.get_dataloader(config, "train", args)
-    val_dataloader = builder.get_dataloader(config, "val", args)
+    train_dataloader = builder.get_dataloader(config, "train")
+    val_dataloader = builder.get_dataloader(config, "val")
 
     model = builder.make_model(config)
     if torch.cuda.is_available():
