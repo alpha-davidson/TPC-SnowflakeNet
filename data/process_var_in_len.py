@@ -4,7 +4,7 @@ into one numpy array per event for track completion
 
 Author: Ben Wagner
 Date Created: 12 Feb 2025
-Date Edited:  13 Feb 2025
+Date Edited:  28 Apr 2025
 """
 
 
@@ -16,6 +16,75 @@ import sys
 import cutting_funcitons as cf
 sys.path.append("/data")
 sys.path.append("../")
+
+
+def filter_charge(ev, threshold):
+    '''
+    Filters events by charge
+
+    Parameters:
+        ev: np.ndarray - point cloud of event; expects charge to be the 4th position
+        threshold: float - minimum value for charge
+
+    Returns:
+        ev but only the points where the minimum charge threshold is met
+    '''
+    return ev[ev[:, 3] >= threshold]
+
+
+def filter_hough(ev, threshold):
+    '''
+    Filters events by Hough Distance
+
+    Parameters:
+        ev: np.ndarray - point cloud of event; expects hough distance to be the last position
+        threshold: float - maximum value for hough distance
+
+    Returns:
+        ev but only the points where the maximum hough distance threshold is met
+    '''
+    return ev[ev[:, -1] <= threshold]
+
+
+def process_ar46(file_path, save_path, min_len, max_len, max_hough=50, min_q=50):
+    '''
+    Turns an experimental 46Ar .h5 file into individual numpy arrays for each event.
+    Hard coded for 4 dimensional ouput and input point cloud to be [x, y, z, q_a, ??, ??, hough_d]
+
+    Parameters:
+        file_path: str - Path to .h5 file
+        save_path: str - Path to folderfor saving .npy files for each event
+        min_len: int - Minimum number of unique points allowed in an event
+        max_len: int - Maximum number of unique points allowed in an event
+        max_hough: int - Maximimum houhg distance for a point
+        min_q: int - Minimum charge amplitude for a point
+
+    Returns:
+        None
+    '''
+
+    file = h5py.File(file_path, 'r')['clean']
+    keys = list(file.keys())
+
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+
+    for i, k in enumerate(keys):
+
+        event = np.zeros((len(file[k]), 7), dtype=float)
+        for idx, p in enumerate(file[k]):
+            event[idx] = p
+
+        charge_filt = filter_charge(event, min_q)
+        hough_filt = filter_hough(charge_filt, max_hough)
+
+        if len(hough_filt) < min_len or len(hough_filt) > max_len:
+            continue
+        
+        name = f"{save_path}/{random.getrandbits(128):032x}.npy"
+        np.save(name, hough_filt[:,:4])
+
+    return
 
 
 def process_file(file_path, save_path, min_len, max_len):
@@ -61,13 +130,14 @@ def process_file(file_path, save_path, min_len, max_len):
         np.save(name, event)
 
 
-def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
+def get_ttv_split(mg_path, o_path, ar_path, train_split=0.6, val_split=0.2):
     '''
     Splits events into train, val, and test sets
 
     Parameters:
         mg_path: str - path to 22Mg events
         o_path: str - path to 16O events
+        ar_path: str - path to 46Ar events
         train_split: float - percentage of events to put in train set
         val_split: float - percentage of events to put in val set
 
@@ -82,8 +152,9 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
     
     mg_hashes = os.listdir(mg_path)
     o_hashes = os.listdir(o_path)
+    ar_hashes = os.listdir(ar_path)
 
-    name_arr = np.ndarray((len(mg_hashes) + len(o_hashes)),
+    name_arr = np.ndarray((len(mg_hashes) + len(o_hashes) + len(ar_hashes)),
                           dtype=[('hash', 'object'), ('experiment', 'object')])
     i = 0
     for h in mg_hashes:
@@ -91,6 +162,9 @@ def get_ttv_split(mg_path, o_path, train_split=0.6, val_split=0.2):
         i += 1
     for h in o_hashes:
         name_arr[i] = (h.split('.')[0], '16O')
+        i += 1
+    for h in ar_hashes:
+        name_arr[i] = (h.split('.')[0], '46Ar')
         i += 1
 
     rng = np.random.default_rng()
@@ -191,11 +265,41 @@ def make_category_file(train, val, test, path):
         jason.write(f"\t\t\t\"{test[-1]['hash']}\"\n")
         jason.write("\t\t]\n")
 
+        jason.write("\t},\n")
+
+        jason.write("\t{\n")
+        jason.write("\t\t\"experiment\": \"46Ar\",\n")
+        jason.write("\t\t\"train\": [\n")
+
+        for event in train[:-1]:
+            if event['experiment'] != "46Ar":
+                continue
+            jason.write(f"\t\t\t\"{event['hash']}\",\n")
+
+        jason.write(f"\t\t\t\"{train[-1]['hash']}\"\n")
+        jason.write("\t\t],\n")
+
+        jason.write("\t\t\"val\": [\n")
+        for event in val[:-1]:
+            if event['experiment'] != "46Ar":
+                continue
+            jason.write(f"\t\t\t\"{event['hash']}\",\n")
+        jason.write(f"\t\t\t\"{val[-1]['hash']}\"\n")
+        jason.write("\t\t],\n")
+
+        jason.write("\t\t\"test\": [\n")
+        for event in test[:-1]:
+            if event['experiment'] != "46Ar":
+                continue
+            jason.write(f"\t\t\t\"{event['hash']}\",\n")
+        jason.write(f"\t\t\t\"{test[-1]['hash']}\"\n")
+        jason.write("\t\t]\n")
+
         jason.write("\t}\n]")
         return
     
 
-def sort_files(mg_path, o_path, save_path, train, val, test):
+def sort_files(mg_path, o_path, ar_path, save_path, train, val, test):
     '''
     Reorganizes files based on their dataset.
     Raises a NameError if an unknown hash is encountered
@@ -203,6 +307,7 @@ def sort_files(mg_path, o_path, save_path, train, val, test):
     Parameters:
         mg_path: str - path to where 22Mg files were initially stored
         o_path: str - path to where 16O files were initially stored
+        ar_path: str - path to where 46Ar files were inititially stored
         save_path: str - path to where files will be stored properly
         train: np.ndarray - hahses that are part of the train set 
                             (and which isotope they are)
@@ -255,9 +360,22 @@ def sort_files(mg_path, o_path, save_path, train, val, test):
         else:
             raise NameError(f"Hash {hsh} not found with 16O files")
         
+    for file in os.listdir(ar_path):
+    
+        hsh = file.split(".")[0]
+        if hsh in train['hash']:
+            os.rename(ar_path+file, save_path+'/train/complete/'+file)
+        elif hsh in val['hash']:
+            os.rename(ar_path+file, save_path+'/val/complete/'+file)
+        elif hsh in test['hash']:
+            os.rename(ar_path+file, save_path+'/test/complete/'+file)
+        else:
+            raise NameError(f"Hash {hsh} not found with 46Ar files")
+        
     # Remove old folders
     os.rmdir(mg_path)
     os.rmdir(o_path)
+    os.rmdir(ar_path)
 
     return
 
@@ -275,12 +393,12 @@ def create_partial_clouds(path, percentage_cut=0.25):
     '''
 
     # Ensure folders exist / create if they don't
-    if not os.path.exists("./train/partial"):
-        os.mkdir("./train/partial")
-    if not os.path.exists("./val/partial"):
-        os.mkdir("./val/partial")
-    if not os.path.exists("./test/partial"):
-        os.mkdir("./test/partial")
+    if not os.path.exists(f"{path}/train/partial"):
+        os.mkdir(f"{path}/train/partial")
+    if not os.path.exists(f"{path}/val/partial"):
+        os.mkdir(f"{path}/val/partial")
+    if not os.path.exists(f"{path}/test/partial"):
+        os.mkdir(f"{path}/test/partial")
 
     rng = np.random.default_rng()
 
@@ -308,30 +426,33 @@ if __name__ == '__main__':
 
     MG_FILE_PATH = '/data/22Mg/point_clouds/simulated/output_digi_HDF_Mg22_Ne20pp_8MeV.h5'
     O_FILE_PATH = '/data/16O/point_clouds/simulated/output_digi_HDF_2Body_2T.h5'
+    AR_FILE_PATH = '/data/46Ar/point_clouds/experimental/clean_run_0130.h5'
 
     # Make sure to edit these paths accordingly, for some reason it doesn't
     # like it when ~ is used instead of /home/DAVIDSON/username
     MG_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/mg22/'
     O_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/o16/'
+    AR_SAVE_PATH = '/home/DAVIDSON/bewagner/TPC-SnowflakeNet/data/ar46/'
 
-    FINAL_PATH = "."
+    FINAL_PATH = "TESTING"
 
     MIN_N_POINTS = 50
     MAX_N_POINTS = 750
 
-    CATEGORY_FILE_PATH = '../completion/category_files/mg22_o16.json'
+    CATEGORY_FILE_PATH = '../completion/category_files/mg22_o16_ar46.json'
 
     # Process
-    process_file(MG_FILE_PATH, MG_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
-    process_file(O_FILE_PATH, O_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
+    # process_file(MG_FILE_PATH, MG_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
+    # process_file(O_FILE_PATH, O_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
+    # process_ar46(AR_FILE_PATH, AR_SAVE_PATH, MIN_N_POINTS, MAX_N_POINTS)
 
     # Split and sort
-    train, val, test = get_ttv_split(MG_SAVE_PATH, O_SAVE_PATH)
+    train, val, test = get_ttv_split(MG_SAVE_PATH, O_SAVE_PATH, AR_SAVE_PATH)
     train = np.sort(train, order='experiment')
     val = np.sort(val, order='experiment')
     test = np.sort(test, order='experiment')
-    make_category_file(train, val, test, CATEGORY_FILE_PATH)
-    sort_files(MG_SAVE_PATH, O_SAVE_PATH, FINAL_PATH, train, val, test)
+    # make_category_file(train, val, test, CATEGORY_FILE_PATH)
+    sort_files(MG_SAVE_PATH, O_SAVE_PATH, AR_SAVE_PATH, FINAL_PATH, train, val, test)
 
     # Cut
     create_partial_clouds(FINAL_PATH)

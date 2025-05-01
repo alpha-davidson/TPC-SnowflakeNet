@@ -9,15 +9,18 @@ sys.path.append('../..')
 from utils.misc import build_lambda_sche, build_lambda_bnsche
 from models.model_completion import SnowflakeNet
 from utils.scheduler import GradualWarmupScheduler
-from .datasets.alpha import ALPhaDataLoader, collate_fn
+from .datasets.alpha import ALPhaDataLoader, ExperimentalDataloader, collate_fn
 
 
 def get_dataloader(config, split):
 
-    dataset = ALPhaDataLoader(config).get_datset(split)
+    if split == 'experimental':
+        dataset = ExperimentalDataloader(config).get_datset()
+    else:
+        dataset = ALPhaDataLoader(config).get_datset(split)
 
     return DataLoader(dataset=dataset,
-                      batch_size=1 if split == 'test' else config.batch_size,
+                      batch_size=1 if (split == 'test' or split == 'experimental') else config.batch_size,
                       shuffle=False,
                     #   collate_fn=collate_fn,
                       drop_last=split=='train',

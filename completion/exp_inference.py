@@ -1,0 +1,76 @@
+import numpy as np
+import torch
+import core.builder as builder
+from utils import misc, yaml_reader, helpers
+import argparse
+import os
+import sys
+sys.path.append("../")
+
+def get_args_from_command_line():
+    parser = argparse.ArgumentParser(description='The argument parser of SnowflakeNet')
+    parser.add_argument('--config', type=str, default=None, help='Configuration File')
+    parser.add_argument('--model', type=str, default=None, help='Path to model checkpoint')
+    parser.add_argument('--n_imgs', type=str, default="10", help='Number of images to save: default is 10, if \"all\" is passed all images will be saved')
+    parser.add_argument('--save_img_path', type=str, default="", help='Where to save images')
+    parser.add_argument('--point_diff', action="store_true", default=False, help="Show which points were added")
+    args = parser.parse_args()
+    return args
+
+def exp_inference(model, args, config):
+
+    n_imgs_flag = -1
+    if args.n_imgs != "all":
+        n_imgs_flag = int(args.n_imgs)
+
+    if not os.path.exists(args.save_img_path):
+        os.makedirs(args.save_img_path)
+
+    with torch.no_grad():
+        
+        data_loader = builder.get_dataloader(config, "experimental")
+
+        for idx, (experiment, data) in enumerate(data_loader):
+
+            if idx == n_imgs_flag:
+                break
+
+            for k, v in data.items():
+                data[k] = helpers.var_or_cuda(v)
+
+            partial = data['cloud']
+            
+            ret = model(partial, return_P0=False)
+
+            input_pc = partial.squeeze().detach().cpu().numpy()
+            output_pc = ret[-1].squeeze().detach().cpu().numpy()
+
+            # Output checking
+            assert not (np.any(np.isnan(output_pc)) or np.any(np.isinf(output_pc))), "NaNs or Infs in pred cloud"
+            # assert max(np.amax(output_pc[:, :2]), np.abs(np.amin(output_pc[:, :2]))) < config.RANGES.MAX_X, "Predicted point out of bounds in XY plane"
+            # assert np.amax(output_pc[:, 2]) < config.RANGES.MAX_Z and np.amin(output_pc) > config.RANGES.MIN_Z, "Predicted point out of bounds in Z dimension"
+
+            if args.point_diff:
+                misc.show_new_points(input_pc, output_pc, idx, args.save_img_path, config)
+            else:
+                misc.experimental_pad_plane_w_threeD(input_pc, output_pc, idx, args.save_img_path, config)
+
+    return
+
+
+
+if __name__ == "__main__":
+
+    args = get_args_from_command_line()
+    if args.config is None:
+        raise ValueError("No config file provided")
+    config = yaml_reader.read_yaml(args.config)
+
+    model = builder.make_model(config)
+    if args.model is None:
+        raise ValueError("No model path provided")
+    misc.load_model(model, args.model)
+    model.to("cuda:0".lower())
+    model.eval()
+    exp_inference(model, args, config)
+    print("Done")

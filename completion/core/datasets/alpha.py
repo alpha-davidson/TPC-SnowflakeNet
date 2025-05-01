@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import json
+import torch.utils
+import torch.utils.data
 from .utils import Compose
 
 def collate_fn(batch):
@@ -107,4 +109,54 @@ class ALPhaDataLoader(object):
             }, {
                 'callback': 'ToTensor',
                 'objects': ['partial_cloud', 'gt_cloud']
+            }])
+    
+
+
+class ExperimentalDataloader(object):
+    def __init__(self, config):
+        self.config = config
+        self.dataset_categories = []
+        with open(config.dataset.category_file_path, 'r') as f:
+            self.dataset_categories = json.loads(f.read())
+
+    def get_datset(self):
+
+        file_list = self._get_file_list()
+        transforms = self._get_transforms()
+
+        return ALPhADataset({'required_items' : ['cloud'],
+                             'shuffle' : False},
+                              file_list, transforms)
+
+    def _get_file_list(self):
+
+        file_list = []
+
+        for dc in self.dataset_categories:
+            print(f"Collecting {dc['experiment']} files")
+            samples = dc['data']
+
+            for s in samples:
+                file_list.append({
+                    'experiment' : dc['experiment'],
+                    'cloud_path' : self.config.dataset.cloud_path % (s)
+                })
+
+        return file_list
+    
+    def _get_transforms(self):
+        return Compose([{
+                'callback': 'DownUpSamplePoints',
+                'parameters': {
+                    'n_points': self.config.dataset.partial_points
+                },
+                'objects': ['cloud']
+            }, {
+                'callback': 'MinMaxDownScale',
+                'parameters': {'config': self.config},
+                'objects': ['cloud']
+            }, {
+                'callback': 'ToTensor',
+                'objects': ['cloud']
             }])
