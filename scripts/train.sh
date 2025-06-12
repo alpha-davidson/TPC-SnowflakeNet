@@ -16,10 +16,10 @@
 ## Script to Execute:
 # change working directory to pipenv managed directory
 
-cd ~/TPC-SnowflakeNet/completion
+cd completion
 source /opt/conda/bin/activate spd
 # module use /opt/pub/eb/modules/casecadelake/Core
 # module load fosscuda #OpenBLAS
 
 # execute python script in virtal env.
-python train.py --config ./configs/JustMg.yaml --exp_name JustMg512In2048OutEMD
+python train.py --config ./configs/JustMgCDL1.yaml --exp_name JustMg512In2048OutEMD

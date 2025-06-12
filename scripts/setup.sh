@@ -16,7 +16,6 @@
 ## Script to Execute:
 # change working directory to pipenv managed directory
 
-cd ~/TPC-SnowflakeNet
 source /opt/conda/bin/activate spd
 # module use /opt/pub/eb/modules/casecadelake/Core
 # module load fosscuda #OpenBLAS
